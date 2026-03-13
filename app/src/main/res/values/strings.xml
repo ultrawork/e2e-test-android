@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Notes</string>
+    <string name="character_count">%d символов</string>
+    <string name="note_title_hint">Заголовок</string>
+    <string name="note_content_hint">Текст заметки</string>
+    <string name="save">Сохранить</string>
 </resources>
