@@ -39,12 +39,13 @@ fun NavGraph() {
             )
         ) {
             val viewModel: NoteEditViewModel = hiltViewModel()
-            val note by viewModel.note.collectAsStateWithLifecycle()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
             NoteEditScreen(
-                note = note,
+                uiState = uiState,
                 onSave = { _, _ -> navController.popBackStack() },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onRetry = { viewModel.retry() }
             )
         }
     }

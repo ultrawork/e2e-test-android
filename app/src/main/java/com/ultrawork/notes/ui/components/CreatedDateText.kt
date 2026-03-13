@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.semantics
 import com.ultrawork.notes.R
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
@@ -44,7 +45,10 @@ private fun formatCreatedDate(createdAt: String?): String {
         return LocalDateTime.now().format(DISPLAY_FORMAT)
     }
     return try {
-        OffsetDateTime.parse(createdAt).toLocalDateTime().format(DISPLAY_FORMAT)
+        OffsetDateTime.parse(createdAt)
+            .atZoneSameInstant(ZoneId.systemDefault())
+            .toLocalDateTime()
+            .format(DISPLAY_FORMAT)
     } catch (_: DateTimeParseException) {
         try {
             LocalDateTime.parse(createdAt).format(DISPLAY_FORMAT)

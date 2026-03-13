@@ -11,6 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+sealed class NoteUiState {
+    data object Loading : NoteUiState()
+    data class Success(val note: Note) : NoteUiState()
+    data class Error(val message: String) : NoteUiState()
+    data object NewNote : NoteUiState()
+}
+
 @HiltViewModel
 class NoteEditViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -19,8 +26,10 @@ class NoteEditViewModel @Inject constructor(
 
     private val noteId: String = savedStateHandle.get<String>("noteId") ?: ""
 
-    private val _note = MutableStateFlow<Note?>(null)
-    val note: StateFlow<Note?> = _note
+    private val _uiState = MutableStateFlow<NoteUiState>(
+        if (noteId.isNotEmpty() && noteId != "new") NoteUiState.Loading else NoteUiState.NewNote
+    )
+    val uiState: StateFlow<NoteUiState> = _uiState
 
     init {
         if (noteId.isNotEmpty() && noteId != "new") {
@@ -31,10 +40,16 @@ class NoteEditViewModel @Inject constructor(
     private fun loadNote() {
         viewModelScope.launch {
             try {
-                _note.value = notesApiService.getNoteById(noteId)
-            } catch (_: Exception) {
-                // Note loading failed — screen will behave as new note
+                val note = notesApiService.getNoteById(noteId)
+                _uiState.value = NoteUiState.Success(note)
+            } catch (e: Exception) {
+                _uiState.value = NoteUiState.Error(e.message ?: "Failed to load note")
             }
         }
+    }
+
+    fun retry() {
+        _uiState.value = NoteUiState.Loading
+        loadNote()
     }
 }

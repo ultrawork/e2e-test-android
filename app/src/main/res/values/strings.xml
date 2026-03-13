@@ -8,4 +8,6 @@
     <string name="navigate_back">Navigate back</string>
     <string name="save_note">Save note</string>
     <string name="created_date_content_description">Created: %1$s</string>
+    <string name="note_load_error">Failed to load note</string>
+    <string name="retry">Retry</string>
 </resources>
