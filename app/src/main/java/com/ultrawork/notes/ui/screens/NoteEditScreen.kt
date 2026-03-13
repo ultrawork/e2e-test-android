@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.ultrawork.notes.R
@@ -37,7 +38,9 @@ fun NoteEditScreen(noteId: String? = null) {
                 value = title,
                 onValueChange = { title = it },
                 label = { Text(stringResource(R.string.note_title_hint)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("note_title_field")
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -49,6 +52,7 @@ fun NoteEditScreen(noteId: String? = null) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+                    .testTag("note_content_field")
             )
 
             CharacterCounter(count = content.length)
@@ -57,7 +61,9 @@ fun NoteEditScreen(noteId: String? = null) {
 
             Button(
                 onClick = { /* TODO: save note */ },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("save_button")
             ) {
                 Text(stringResource(R.string.save))
             }

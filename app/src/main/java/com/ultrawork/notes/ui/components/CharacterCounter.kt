@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -17,8 +18,10 @@ fun CharacterCounter(count: Int, modifier: Modifier = Modifier) {
         text = text,
         style = MaterialTheme.typography.bodySmall,
         color = Color.Gray,
-        modifier = modifier.semantics {
-            contentDescription = text
-        }
+        modifier = modifier
+            .testTag("character_counter")
+            .semantics {
+                contentDescription = text
+            }
     )
 }
