@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Notes</string>
+    <string name="note_edit_title_new">New Note</string>
+    <string name="note_edit_title_edit">Edit Note</string>
+    <string name="note_title_hint">Title</string>
+    <string name="note_content_hint">Content</string>
+    <string name="navigate_back">Navigate back</string>
+    <string name="save_note">Save note</string>
+    <string name="created_date_content_description">Created: %1$s</string>
 </resources>
