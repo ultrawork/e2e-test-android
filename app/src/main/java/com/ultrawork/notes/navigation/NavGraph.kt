@@ -1,12 +1,16 @@
 package com.ultrawork.notes.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.ultrawork.notes.ui.screens.NoteEditScreen
+import com.ultrawork.notes.viewmodel.NoteEditViewModel
 
 object Routes {
     const val LOGIN = "login"
@@ -34,9 +38,11 @@ fun NavGraph() {
                 navArgument("noteId") { type = NavType.StringType }
             )
         ) {
-            // TODO: Retrieve note from ViewModel by noteId
+            val viewModel: NoteEditViewModel = hiltViewModel()
+            val note by viewModel.note.collectAsStateWithLifecycle()
+
             NoteEditScreen(
-                note = null,
+                note = note,
                 onSave = { _, _ -> navController.popBackStack() },
                 onBack = { navController.popBackStack() }
             )

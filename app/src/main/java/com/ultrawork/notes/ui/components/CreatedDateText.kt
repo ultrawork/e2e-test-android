@@ -39,6 +39,8 @@ fun CreatedDateText(
 
 private fun formatCreatedDate(createdAt: String?): String {
     if (createdAt == null) {
+        // For new notes: capture current timestamp once via remember(null) so the
+        // displayed date stays stable across recompositions during the editing session.
         return LocalDateTime.now().format(DISPLAY_FORMAT)
     }
     return try {
