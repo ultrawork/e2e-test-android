@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import com.ultrawork.notes.R
@@ -32,9 +33,11 @@ fun CreatedDateText(
         text = formattedDate,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.semantics {
-            contentDescription = accessibilityLabel
-        }
+        modifier = modifier
+            .testTag("created_date_text")
+            .semantics {
+                contentDescription = accessibilityLabel
+            }
     )
 }
 

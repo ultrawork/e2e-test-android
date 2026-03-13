@@ -28,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.ultrawork.notes.R
@@ -77,7 +78,10 @@ fun NoteEditScreen(
                 },
                 actions = {
                     if (uiState is NoteUiState.Success || uiState is NoteUiState.NewNote) {
-                        IconButton(onClick = { onSave(title, content) }) {
+                        IconButton(
+                            onClick = { onSave(title, content) },
+                            modifier = Modifier.testTag("save_note_button")
+                        ) {
                             Icon(
                                 imageVector = Icons.Filled.Check,
                                 contentDescription = stringResource(R.string.save_note)
@@ -134,6 +138,7 @@ fun NoteEditScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
+                            .testTag("note_title_field")
                     )
 
                     CreatedDateText(
@@ -149,6 +154,7 @@ fun NoteEditScreen(
                             .fillMaxWidth()
                             .weight(1f)
                             .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .testTag("note_content_field")
                     )
                 }
             }
