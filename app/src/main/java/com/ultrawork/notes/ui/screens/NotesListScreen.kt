@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ultrawork.notes.ui.components.NotesCounter
@@ -45,13 +46,16 @@ fun NotesListScreen(
         )
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("notes_list")
         ) {
             items(filteredNotes, key = { it.id }) { note ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .testTag("note_card_${note.id}")
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
