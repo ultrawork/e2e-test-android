@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Notes</string>
+    <string name="notes_counter_total">Всего заметок: %d</string>
+    <string name="notes_counter_filtered">Найдено: %1$d из %2$d</string>
+    <string name="notes_search_content_description">Поиск заметок</string>
+    <string name="notes_search_placeholder">Поиск…</string>
+    <string name="notes_search_clear">Очистить поиск</string>
 </resources>
