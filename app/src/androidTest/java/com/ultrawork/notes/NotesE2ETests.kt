@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.ultrawork.notes.data.repository.fake.FakeNotesRepository
+import com.ultrawork.notes.model.Note
 import com.ultrawork.notes.ui.screens.NotesListScreen
 import com.ultrawork.notes.ui.theme.NotesTheme
 import com.ultrawork.notes.viewmodel.NotesViewModel
@@ -18,10 +20,19 @@ class NotesE2ETests {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    private val testNotes = listOf(
+        Note(id = "1", title = "Shopping List", content = "Milk, Eggs, Bread"),
+        Note(id = "2", title = "Meeting Notes", content = "Discuss project timeline"),
+        Note(id = "3", title = "Ideas", content = "New app features"),
+        Note(id = "4", title = "Travel Plans", content = "Book flights and hotel"),
+        Note(id = "5", title = "Work Tasks", content = "Complete documentation")
+    )
+
     private fun launchScreen() {
+        val fakeRepo = FakeNotesRepository(initialNotes = testNotes)
         composeTestRule.setContent {
             NotesTheme {
-                NotesListScreen(viewModel = NotesViewModel())
+                NotesListScreen(viewModel = NotesViewModel(fakeRepo))
             }
         }
         composeTestRule.waitForIdle()

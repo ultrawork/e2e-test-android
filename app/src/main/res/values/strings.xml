@@ -6,4 +6,6 @@
     <string name="notes_search_content_description">Поиск заметок</string>
     <string name="notes_search_placeholder">Поиск…</string>
     <string name="notes_search_clear">Очистить поиск</string>
+    <string name="favorites_filter_description">Фильтр избранных</string>
+    <string name="favorite_button_description">Добавить в избранное</string>
 </resources>
