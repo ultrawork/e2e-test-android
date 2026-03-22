@@ -40,6 +40,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -92,7 +93,7 @@ interface CategoryManagerViewModelContract {
 /** Route wrapper that subscribes to ViewModel state and delegates to stateless UI. */
 @Composable
 fun CategoryManagerScreenRoute(
-    viewModel: CategoryManagerViewModelContract = viewModel<CategoryManagerDemoViewModel>()
+    viewModel: CategoryManagerViewModelContract,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -106,6 +107,12 @@ fun CategoryManagerScreenRoute(
         onUpdateCategory = viewModel::updateCategory,
         onDeleteCategory = viewModel::deleteCategory,
     )
+}
+
+@Composable
+fun CategoryManagerScreenRoute() {
+    val viewModel: CategoryManagerViewModelContract = viewModel<CategoryManagerDemoViewModel>()
+    CategoryManagerScreenRoute(viewModel = viewModel)
 }
 
 /** Stateless category manager screen. */
@@ -179,28 +186,30 @@ fun CategoryManagerScreen(
                 else -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(state.categories, key = { it.id }) { category ->
-                            val dismissState = rememberCategoryDismissState(
-                                category = category,
-                                onDeleteCategory = onDeleteCategory,
-                            )
+                            key(category.id) {
+                                val dismissState = rememberCategoryDismissState(
+                                    category = category,
+                                    onDeleteCategory = onDeleteCategory,
+                                )
 
-                            SwipeToDismissBox(
-                                state = dismissState,
-                                enableDismissFromStartToEnd = false,
-                                enableDismissFromEndToStart = true,
-                                backgroundContent = {
-                                    DeleteBackground(dismissState = dismissState)
-                                },
-                                content = {
-                                    CategoryRow(
-                                        category = category,
-                                        onClick = {
-                                            dialogState = CategoryDialogUiState.edit(category)
-                                        }
-                                    )
-                                }
-                            )
-                            HorizontalDivider()
+                                SwipeToDismissBox(
+                                    state = dismissState,
+                                    enableDismissFromStartToEnd = false,
+                                    enableDismissFromEndToStart = true,
+                                    backgroundContent = {
+                                        DeleteBackground(dismissState = dismissState)
+                                    },
+                                    content = {
+                                        CategoryRow(
+                                            category = category,
+                                            onClick = {
+                                                dialogState = CategoryDialogUiState.edit(category)
+                                            }
+                                        )
+                                    }
+                                )
+                                HorizontalDivider()
+                            }
                         }
                     }
                 }
@@ -235,16 +244,20 @@ private fun rememberCategoryDismissState(
     category: CategoryItemUiModel,
     onDeleteCategory: (CategoryItemUiModel) -> Unit,
 ): SwipeToDismissBoxState {
-    return androidx.compose.material3.rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDeleteCategory(category)
-                false
-            } else {
-                false
-            }
-        }
-    )
+    return remember(category.id) {
+        androidx.compose.material3.SwipeToDismissBoxState(
+            initialValue = SwipeToDismissBoxValue.Settled,
+            confirmValueChange = { value ->
+                if (value == SwipeToDismissBoxValue.EndToStart) {
+                    onDeleteCategory(category)
+                    false
+                } else {
+                    false
+                }
+            },
+            positionalThreshold = { distance -> distance * 0.5f },
+        )
+    }
 }
 
 /** Category row with color indicator and click-to-edit behavior. */
