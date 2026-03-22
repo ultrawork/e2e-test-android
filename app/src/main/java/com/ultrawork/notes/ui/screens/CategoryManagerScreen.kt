@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -24,9 +25,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -35,7 +36,7 @@ import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,54 +47,90 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ultrawork.notes.ui.theme.NotesTheme
-import java.util.UUID
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlin.random.Random
 
-/** UI model for category list item. */
+/** UI model for a single category row. */
 data class CategoryItemUiModel(
-    val id: String,
+    val id: Long,
     val name: String,
-    val colorHex: String
+    val colorHex: String,
 )
 
-/** UI state contract for category manager screen. */
+/** Screen state contract for category management UI. */
 data class CategoryManagerUiState(
     val categories: List<CategoryItemUiModel> = emptyList(),
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 )
 
-/** Returns true when color string matches #RRGGBB. */
-fun isValidHexColor(value: String): Boolean = value.matches(Regex("^#[0-9A-Fa-f]{6}$"))
-
-/** Parses #RRGGBB into Compose Color or returns null. */
-fun parseHexColorOrNull(value: String): Color? {
-    if (!isValidHexColor(value)) return null
-    return try {
-        Color(value.removePrefix("#").toLong(16) or 0xFF000000)
-    } catch (_: NumberFormatException) {
-        null
-    }
+/**
+ * ViewModel contract used by [CategoryManagerScreenRoute].
+ * This keeps the screen self-contained while allowing future VM integration.
+ */
+interface CategoryManagerViewModelContract {
+    val uiState: StateFlow<CategoryManagerUiState>
+    fun loadCategories()
+    fun createCategory(name: String, colorHex: String)
+    fun updateCategory(id: Long, name: String, colorHex: String)
+    fun deleteCategory(category: CategoryItemUiModel)
 }
 
+/**
+ * Route wrapper that subscribes to a ViewModel-like contract and delegates rendering
+ * to the stateless [CategoryManagerScreen].
+ */
+@Composable
+fun CategoryManagerScreenRoute(
+    viewModel: CategoryManagerViewModelContract = viewModel<CategoryManagerDemoViewModel>()
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadCategories()
+    }
+
+    CategoryManagerScreen(
+        state = state,
+        onCreateCategory = viewModel::createCategory,
+        onUpdateCategory = { id, name, colorHex ->
+            viewModel.updateCategory(id, name, colorHex)
+        },
+        onDeleteCategory = viewModel::deleteCategory,
+    )
+}
+
+/** Stateless category manager screen. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoryManagerScreen(
     state: CategoryManagerUiState,
     onCreateCategory: (name: String, colorHex: String) -> Unit,
-    onUpdateCategory: (category: CategoryItemUiModel, name: String, colorHex: String) -> Unit,
-    onDeleteCategory: (category: CategoryItemUiModel) -> Unit,
-    modifier: Modifier = Modifier
+    onUpdateCategory: (id: Long, name: String, colorHex: String) -> Unit,
+    onDeleteCategory: (CategoryItemUiModel) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    var dialogState by rememberSaveable { mutableStateOf<CategoryDialogState?>(null) }
+    var dialogState by rememberSaveable(stateSaver = CategoryDialogUiState.Saver) {
+        mutableStateOf<CategoryDialogUiState?>(null)
+    }
 
     LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.takeIf { it.isNotBlank() }?.let { snackbarHostState.showSnackbar(it) }
+        state.errorMessage?.takeIf { it.isNotBlank() }?.let {
+            snackbarHostState.showSnackbar(it)
+        }
     }
 
     Scaffold(
@@ -101,7 +138,7 @@ fun CategoryManagerScreen(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { dialogState = CategoryDialogState.Create }
+                onClick = { dialogState = CategoryDialogUiState.create() }
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add category")
             }
@@ -112,48 +149,89 @@ fun CategoryManagerScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when {
-                state.isLoading -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(text = "Loading categories...")
-                    }
-                }
+            Column(modifier = Modifier.fillMaxSize()) {
+                Text(
+                    text = "Manage categories",
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier.padding(16.dp)
+                )
 
-                state.categories.isEmpty() -> {
+                if (state.errorMessage != null) {
                     Text(
-                        text = "No categories yet",
-                        modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodyLarge
+                        text = state.errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        item {
-                            state.errorMessage?.let {
-                                Text(
-                                    text = it,
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                )
+                when {
+                    state.isLoading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator()
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(text = "Loading categories...")
+                                if (state.errorMessage != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = state.errorMessage,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
                             }
                         }
-                        items(items = state.categories, key = { it.id }) { category ->
-                            CategorySwipeItem(
-                                category = category,
-                                onClick = {
-                                    dialogState = CategoryDialogState.Edit(category)
-                                },
-                                onDelete = { onDeleteCategory(category) }
+                    }
+
+                    state.categories.isEmpty() -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No categories yet. Tap + to add one.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
+                        }
+                    }
+
+                    else -> {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(
+                                items = state.categories,
+                                key = { it.id }
+                            ) { category ->
+                                val dismissState = rememberCategoryDismissState(
+                                    category = category,
+                                    onDeleteCategory = onDeleteCategory,
+                                )
+
+                                SwipeToDismissBox(
+                                    state = dismissState,
+                                    enableDismissFromStartToEnd = false,
+                                    enableDismissFromEndToStart = true,
+                                    backgroundContent = {
+                                        DeleteBackground(dismissState = dismissState)
+                                    },
+                                    content = {
+                                        CategoryRow(
+                                            category = category,
+                                            onClick = {
+                                                dialogState = CategoryDialogUiState.edit(category)
+                                            }
+                                        )
+                                    }
+                                )
+                                HorizontalDivider()
+                            }
                         }
                     }
                 }
@@ -161,208 +239,334 @@ fun CategoryManagerScreen(
         }
     }
 
-    dialogState?.let { currentDialogState ->
+    dialogState?.let { dialog ->
         CategoryEditorDialog(
-            initialCategory = (currentDialogState as? CategoryDialogState.Edit)?.category,
+            dialogState = dialog,
             onDismiss = { dialogState = null },
+            onInvalidInput = { message ->
+                dialogState = dialog.copy(errorMessage = message)
+            },
             onSave = { name, colorHex ->
-                when (currentDialogState) {
-                    is CategoryDialogState.Create -> onCreateCategory(name.trim(), colorHex)
-                    is CategoryDialogState.Edit -> onUpdateCategory(currentDialogState.category, name.trim(), colorHex)
+                if (dialog.mode == CategoryDialogMode.Create) {
+                    onCreateCategory(name.trim(), colorHex)
+                } else {
+                    dialog.categoryId?.let { id ->
+                        onUpdateCategory(id, name.trim(), colorHex)
+                    }
                 }
                 dialogState = null
-            },
-            snackbarHostState = snackbarHostState
+            }
         )
     }
 }
 
-private sealed interface CategoryDialogState {
-    data object Create : CategoryDialogState
-    data class Edit(val category: CategoryItemUiModel) : CategoryDialogState
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CategorySwipeItem(
+private fun rememberCategoryDismissState(
     category: CategoryItemUiModel,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val dismissState = rememberSwipeToDismissBoxState(
+    onDeleteCategory: (CategoryItemUiModel) -> Unit,
+): SwipeToDismissBoxState {
+    return androidx.compose.material3.rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
+                onDeleteCategory(category)
                 true
             } else {
                 false
             }
         }
     )
-
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = true,
-        backgroundContent = {
-            DeleteBackground(dismissState = dismissState)
-        }
-    ) {
-        CategoryRow(category = category, onClick = onClick)
-    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DeleteBackground(dismissState: SwipeToDismissBoxState) {
-    val alignment = Alignment.CenterEnd
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(72.dp)
-            .background(MaterialTheme.colorScheme.error, RoundedCornerShape(16.dp))
-            .padding(horizontal = 20.dp),
-        contentAlignment = alignment
-    ) {
-        Icon(
-            imageVector = Icons.Default.Delete,
-            contentDescription = "Delete category",
-            tint = MaterialTheme.colorScheme.onError
-        )
-    }
-}
-
+/** Category row with color indicator and click-to-edit behavior. */
 @Composable
 private fun CategoryRow(
     category: CategoryItemUiModel,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val indicatorColor = parseHexColorOrNull(category.colorHex) ?: MaterialTheme.colorScheme.primary
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 20.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(18.dp)
-                .background(indicatorColor, CircleShape)
+                .size(16.dp)
+                .clip(CircleShape)
+                .background(parseHexColorOrDefault(category.colorHex))
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = category.name,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = category.colorHex,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
+/** Swipe delete background. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DeleteBackground(
+    dismissState: SwipeToDismissBoxState,
+) {
+    val isDismissed = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.error)
+            .padding(horizontal = 20.dp),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Icon(
+            imageVector = Icons.Default.Delete,
+            contentDescription = "Delete category",
+            tint = MaterialTheme.colorScheme.onError,
+            modifier = Modifier.size(if (isDismissed) 28.dp else 24.dp)
+        )
+    }
+}
+
+/** Shared create/edit dialog for categories. */
 @Composable
 private fun CategoryEditorDialog(
-    initialCategory: CategoryItemUiModel?,
+    dialogState: CategoryDialogUiState,
     onDismiss: () -> Unit,
+    onInvalidInput: (String) -> Unit,
     onSave: (name: String, colorHex: String) -> Unit,
-    snackbarHostState: SnackbarHostState
 ) {
-    var name by rememberSaveable(initialCategory?.id) { mutableStateOf(initialCategory?.name.orEmpty()) }
-    var colorHex by rememberSaveable(initialCategory?.id) {
-        mutableStateOf(initialCategory?.colorHex ?: "#2196F3")
+    var name by rememberSaveable(dialogState.mode, dialogState.categoryId) {
+        mutableStateOf(dialogState.initialName)
     }
-    var nameError by rememberSaveable(initialCategory?.id) { mutableStateOf<String?>(null) }
-    var colorError by rememberSaveable(initialCategory?.id) { mutableStateOf<String?>(null) }
-
-    val previewColor = parseHexColorOrNull(colorHex) ?: MaterialTheme.colorScheme.surfaceVariant
-    val isEditMode = initialCategory != null
+    var colorHex by rememberSaveable(dialogState.mode, dialogState.categoryId) {
+        mutableStateOf(dialogState.initialColorHex)
+    }
+    var localError by rememberSaveable(dialogState.mode, dialogState.categoryId) {
+        mutableStateOf(dialogState.errorMessage)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(if (isEditMode) "Edit category" else "Create category")
+            Text(text = if (dialogState.mode == CategoryDialogMode.Create) "Create category" else "Edit category")
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
+                TextField(
                     value = name,
                     onValueChange = {
                         name = it
-                        if (nameError != null) nameError = null
+                        localError = null
                     },
                     label = { Text("Name") },
                     singleLine = true,
-                    isError = nameError != null,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    supportingText = {
-                        nameError?.let { Text(text = it) }
-                    }
+                    isError = localError != null && name.trim().isEmpty(),
                 )
-
-                OutlinedTextField(
+                TextField(
                     value = colorHex,
                     onValueChange = {
                         colorHex = it.uppercase()
-                        if (colorError != null) colorError = null
+                        localError = null
                     },
                     label = { Text("Color hex") },
+                    placeholder = { Text("#RRGGBB") },
                     singleLine = true,
-                    isError = colorError != null,
-                    supportingText = {
-                        colorError?.let { Text(text = it) }
-                    }
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+                    isError = localError != null && !isValidHexColor(colorHex),
                 )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Preview:")
-                    Spacer(modifier = Modifier.width(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(28.dp)
-                            .background(previewColor, CircleShape)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(parseHexColorOrDefault(colorHex))
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = colorHex)
+                    Text(
+                        text = "Preview",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                localError?.let {
+                    Text(
+                        text = it,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
                     val trimmedName = name.trim()
-                    val trimmedColor = colorHex.trim()
+                    val normalizedHex = colorHex.trim().uppercase()
+                    val validationError = when {
+                        trimmedName.isEmpty() -> "Name cannot be empty"
+                        !isValidHexColor(normalizedHex) -> "Color must match #RRGGBB"
+                        else -> null
+                    }
 
-                    nameError = if (trimmedName.isBlank()) "Name must not be empty" else null
-                    colorError = if (!isValidHexColor(trimmedColor)) "Use #RRGGBB format" else null
-
-                    if (nameError == null && colorError == null) {
-                        onSave(trimmedName, trimmedColor)
+                    if (validationError != null) {
+                        localError = validationError
+                        onInvalidInput(validationError)
                     } else {
-                        val message = nameError ?: colorError ?: "Invalid category data"
-                        LaunchedEffectSnackbar(snackbarHostState = snackbarHostState, message = message)
+                        onSave(trimmedName, normalizedHex)
                     }
                 }
             ) {
                 Text("Save")
             }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
         }
     )
 }
 
-@Composable
-private fun LaunchedEffectSnackbar(
-    snackbarHostState: SnackbarHostState,
-    message: String
+private enum class CategoryDialogMode {
+    Create,
+    Edit,
+}
+
+private data class CategoryDialogUiState(
+    val mode: CategoryDialogMode,
+    val categoryId: Long?,
+    val initialName: String,
+    val initialColorHex: String,
+    val errorMessage: String? = null,
 ) {
-    LaunchedEffect(message) {
-        snackbarHostState.showSnackbar(message)
+    companion object {
+        val Saver = androidx.compose.runtime.saveable.listSaver<CategoryDialogUiState?, Any?>(
+            save = { state ->
+                if (state == null) {
+                    emptyList()
+                } else {
+                    listOf(
+                        state.mode.name,
+                        state.categoryId,
+                        state.initialName,
+                        state.initialColorHex,
+                        state.errorMessage,
+                    )
+                }
+            },
+            restore = { restored ->
+                if (restored.isEmpty()) {
+                    null
+                } else {
+                    CategoryDialogUiState(
+                        mode = CategoryDialogMode.valueOf(restored[0] as String),
+                        categoryId = restored[1] as Long?,
+                        initialName = restored[2] as String,
+                        initialColorHex = restored[3] as String,
+                        errorMessage = restored[4] as String?,
+                    )
+                }
+            }
+        )
+
+        fun create(): CategoryDialogUiState = CategoryDialogUiState(
+            mode = CategoryDialogMode.Create,
+            categoryId = null,
+            initialName = "",
+            initialColorHex = "#2196F3",
+        )
+
+        fun edit(category: CategoryItemUiModel): CategoryDialogUiState = CategoryDialogUiState(
+            mode = CategoryDialogMode.Edit,
+            categoryId = category.id,
+            initialName = category.name,
+            initialColorHex = category.colorHex,
+        )
+    }
+}
+
+/** Validates color hex in #RRGGBB format. */
+internal fun isValidHexColor(value: String): Boolean {
+    return HEX_COLOR_REGEX.matches(value.trim())
+}
+
+/** Parses #RRGGBB and falls back to a neutral color on invalid input. */
+internal fun parseHexColorOrDefault(value: String, defaultColor: Color = Color(0xFF9E9E9E)): Color {
+    val normalized = value.trim()
+    if (!isValidHexColor(normalized)) {
+        return defaultColor
+    }
+    return try {
+        val raw = normalized.removePrefix("#").toLong(16)
+        Color(
+            red = ((raw shr 16) and 0xFF).toInt(),
+            green = ((raw shr 8) and 0xFF).toInt(),
+            blue = (raw and 0xFF).toInt(),
+        )
+    } catch (_: IllegalArgumentException) {
+        defaultColor
+    }
+}
+
+private val HEX_COLOR_REGEX = Regex("^#[0-9A-Fa-f]{6}$")
+
+/** Demo ViewModel for preview/manual verification without DI or repository changes. */
+class CategoryManagerDemoViewModel : ViewModel(), CategoryManagerViewModelContract {
+    private val _uiState = MutableStateFlow(CategoryManagerUiState(isLoading = true))
+    override val uiState: StateFlow<CategoryManagerUiState> = _uiState.asStateFlow()
+
+    override fun loadCategories() {
+        _uiState.value = CategoryManagerUiState(
+            categories = listOf(
+                CategoryItemUiModel(1L, "Work", "#2196F3"),
+                CategoryItemUiModel(2L, "Home", "#4CAF50"),
+                CategoryItemUiModel(3L, "Ideas", "#FF9800"),
+            ),
+            isLoading = false,
+            errorMessage = null,
+        )
+    }
+
+    override fun createCategory(name: String, colorHex: String) {
+        val current = _uiState.value.categories
+        _uiState.value = _uiState.value.copy(
+            categories = current + CategoryItemUiModel(
+                id = Random.nextLong(1000L, 999999L),
+                name = name,
+                colorHex = colorHex,
+            ),
+            errorMessage = null,
+        )
+    }
+
+    override fun updateCategory(id: Long, name: String, colorHex: String) {
+        _uiState.value = _uiState.value.copy(
+            categories = _uiState.value.categories.map { category ->
+                if (category.id == id) {
+                    category.copy(name = name, colorHex = colorHex)
+                } else {
+                    category
+                }
+            },
+            errorMessage = null,
+        )
+    }
+
+    override fun deleteCategory(category: CategoryItemUiModel) {
+        _uiState.value = _uiState.value.copy(
+            categories = _uiState.value.categories.filterNot { it.id == category.id },
+            errorMessage = null,
+        )
     }
 }
 
@@ -370,47 +574,41 @@ private fun LaunchedEffectSnackbar(
 @Composable
 private fun CategoryManagerScreenPreview() {
     NotesTheme {
-        CategoryManagerScreenDemo()
+        val items = remember {
+            mutableStateListOf(
+                CategoryItemUiModel(1L, "Work", "#2196F3"),
+                CategoryItemUiModel(2L, "Home", "#4CAF50"),
+                CategoryItemUiModel(3L, "Ideas", "#FF9800"),
+            )
+        }
+
+        CategoryManagerScreen(
+            state = CategoryManagerUiState(categories = items),
+            onCreateCategory = { name, colorHex ->
+                items.add(CategoryItemUiModel(Random.nextLong(), name, colorHex))
+            },
+            onUpdateCategory = { id, name, colorHex ->
+                val index = items.indexOfFirst { it.id == id }
+                if (index >= 0) {
+                    items[index] = items[index].copy(name = name, colorHex = colorHex)
+                }
+            },
+            onDeleteCategory = { category ->
+                items.remove(category)
+            },
+        )
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-private fun CategoryManagerScreenDemo() {
-    val categories = remember {
-        mutableStateListOf(
-            CategoryItemUiModel(id = "1", name = "Work", colorHex = "#FF9800"),
-            CategoryItemUiModel(id = "2", name = "Personal", colorHex = "#4CAF50"),
-            CategoryItemUiModel(id = "3", name = "Ideas", colorHex = "#2196F3")
+private fun CategoryManagerEmptyStatePreview() {
+    NotesTheme {
+        CategoryManagerScreen(
+            state = CategoryManagerUiState(categories = emptyList(), isLoading = false),
+            onCreateCategory = { _, _ -> },
+            onUpdateCategory = { _, _, _ -> },
+            onDeleteCategory = {},
         )
     }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var isLoading by remember { mutableStateOf(false) }
-
-    CategoryManagerScreen(
-        state = CategoryManagerUiState(
-            categories = categories,
-            isLoading = isLoading,
-            errorMessage = errorMessage
-        ),
-        onCreateCategory = { name, colorHex ->
-            categories.add(
-                CategoryItemUiModel(
-                    id = UUID.randomUUID().toString(),
-                    name = name,
-                    colorHex = colorHex
-                )
-            )
-            errorMessage = null
-        },
-        onUpdateCategory = { category, name, colorHex ->
-            val index = categories.indexOfFirst { it.id == category.id }
-            if (index >= 0) {
-                categories[index] = category.copy(name = name, colorHex = colorHex)
-                errorMessage = null
-            }
-        },
-        onDeleteCategory = { category ->
-            categories.removeAll { it.id == category.id }
-        }
-    )
 }
