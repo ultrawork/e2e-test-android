@@ -88,10 +88,7 @@ interface CategoryManagerViewModelContract {
     fun deleteCategory(category: CategoryItemUiModel)
 }
 
-/**
- * Route wrapper that subscribes to a ViewModel-like contract and delegates rendering
- * to the stateless [CategoryManagerScreen].
- */
+/** Route wrapper that subscribes to ViewModel state and delegates to stateless UI. */
 @Composable
 fun CategoryManagerScreenRoute(
     viewModel: CategoryManagerViewModelContract = viewModel<CategoryManagerDemoViewModel>()
@@ -105,9 +102,7 @@ fun CategoryManagerScreenRoute(
     CategoryManagerScreen(
         state = state,
         onCreateCategory = viewModel::createCategory,
-        onUpdateCategory = { id, name, colorHex ->
-            viewModel.updateCategory(id, name, colorHex)
-        },
+        onUpdateCategory = viewModel::updateCategory,
         onDeleteCategory = viewModel::deleteCategory,
     )
 }
@@ -123,13 +118,11 @@ fun CategoryManagerScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    var dialogState by rememberSaveable(stateSaver = CategoryDialogUiState.Saver) {
-        mutableStateOf<CategoryDialogUiState?>(null)
-    }
+    var dialogState by remember { mutableStateOf<CategoryDialogUiState?>(null) }
 
     LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.takeIf { it.isNotBlank() }?.let {
-            snackbarHostState.showSnackbar(it)
+        state.errorMessage?.takeIf { it.isNotBlank() }?.let { message ->
+            snackbarHostState.showSnackbar(message)
         }
     }
 
@@ -137,101 +130,94 @@ fun CategoryManagerScreen(
         modifier = modifier,
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { dialogState = CategoryDialogUiState.create() }
-            ) {
+            FloatingActionButton(onClick = { dialogState = CategoryDialogUiState.create() }) {
                 Icon(Icons.Default.Add, contentDescription = "Add category")
             }
         }
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Text(
-                    text = "Manage categories",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(16.dp)
-                )
+            Text(
+                text = "Manage categories",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(16.dp)
+            )
 
-                if (state.errorMessage != null) {
-                    Text(
-                        text = state.errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
+            if (state.errorMessage != null) {
+                Text(
+                    text = state.errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            when {
+                state.isLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(text = "Loading categories...")
+                            if (state.errorMessage != null) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = state.errorMessage,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
                 }
 
-                when {
-                    state.isLoading -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(24.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CircularProgressIndicator()
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(text = "Loading categories...")
-                                if (state.errorMessage != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text(
-                                        text = state.errorMessage,
-                                        color = MaterialTheme.colorScheme.error,
-                                        style = MaterialTheme.typography.bodyMedium
+                state.categories.isEmpty() -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No categories yet. Tap + to add one.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                else -> {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(state.categories, key = { it.id }) { category ->
+                            val dismissState = rememberCategoryDismissState(
+                                category = category,
+                                onDeleteCategory = onDeleteCategory,
+                            )
+
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                enableDismissFromStartToEnd = false,
+                                enableDismissFromEndToStart = true,
+                                backgroundContent = {
+                                    DeleteBackground(dismissState = dismissState)
+                                },
+                                content = {
+                                    CategoryRow(
+                                        category = category,
+                                        onClick = {
+                                            dialogState = CategoryDialogUiState.edit(category)
+                                        }
                                     )
                                 }
-                            }
-                        }
-                    }
-
-                    state.categories.isEmpty() -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No categories yet. Tap + to add one.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                        }
-                    }
-
-                    else -> {
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            items(
-                                items = state.categories,
-                                key = { it.id }
-                            ) { category ->
-                                val dismissState = rememberCategoryDismissState(
-                                    category = category,
-                                    onDeleteCategory = onDeleteCategory,
-                                )
-
-                                SwipeToDismissBox(
-                                    state = dismissState,
-                                    enableDismissFromStartToEnd = false,
-                                    enableDismissFromEndToStart = true,
-                                    backgroundContent = {
-                                        DeleteBackground(dismissState = dismissState)
-                                    },
-                                    content = {
-                                        CategoryRow(
-                                            category = category,
-                                            onClick = {
-                                                dialogState = CategoryDialogUiState.edit(category)
-                                            }
-                                        )
-                                    }
-                                )
-                                HorizontalDivider()
-                            }
+                            HorizontalDivider()
                         }
                     }
                 }
@@ -317,7 +303,7 @@ private fun CategoryRow(
 private fun DeleteBackground(
     dismissState: SwipeToDismissBoxState,
 ) {
-    val isDismissed = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart
+    val iconSize = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) 28.dp else 24.dp
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -329,7 +315,7 @@ private fun DeleteBackground(
             imageVector = Icons.Default.Delete,
             contentDescription = "Delete category",
             tint = MaterialTheme.colorScheme.onError,
-            modifier = Modifier.size(if (isDismissed) 28.dp else 24.dp)
+            modifier = Modifier.size(iconSize)
         )
     }
 }
@@ -450,35 +436,6 @@ private data class CategoryDialogUiState(
     val errorMessage: String? = null,
 ) {
     companion object {
-        val Saver = androidx.compose.runtime.saveable.listSaver<CategoryDialogUiState?, Any?>(
-            save = { state ->
-                if (state == null) {
-                    emptyList()
-                } else {
-                    listOf(
-                        state.mode.name,
-                        state.categoryId,
-                        state.initialName,
-                        state.initialColorHex,
-                        state.errorMessage,
-                    )
-                }
-            },
-            restore = { restored ->
-                if (restored.isEmpty()) {
-                    null
-                } else {
-                    CategoryDialogUiState(
-                        mode = CategoryDialogMode.valueOf(restored[0] as String),
-                        categoryId = restored[1] as Long?,
-                        initialName = restored[2] as String,
-                        initialColorHex = restored[3] as String,
-                        errorMessage = restored[4] as String?,
-                    )
-                }
-            }
-        )
-
         fun create(): CategoryDialogUiState = CategoryDialogUiState(
             mode = CategoryDialogMode.Create,
             categoryId = null,
@@ -538,9 +495,8 @@ class CategoryManagerDemoViewModel : ViewModel(), CategoryManagerViewModelContra
     }
 
     override fun createCategory(name: String, colorHex: String) {
-        val current = _uiState.value.categories
         _uiState.value = _uiState.value.copy(
-            categories = current + CategoryItemUiModel(
+            categories = _uiState.value.categories + CategoryItemUiModel(
                 id = Random.nextLong(1000L, 999999L),
                 name = name,
                 colorHex = colorHex,
