@@ -74,3 +74,11 @@ app/src/main/java/com/ultrawork/notes/
 ├── MainActivity.kt
 └── NotesApp.kt
 ```
+
+## Testing
+
+### Manual E2E
+
+Ручные E2E-сценарии для тестирования функциональности избранных заметок, фильтрации и базовых CRUD-операций описаны в документе:
+
+- [Manual E2E Scenarios — Android Notes](docs/e2e/scenarios/android-notes.md)
