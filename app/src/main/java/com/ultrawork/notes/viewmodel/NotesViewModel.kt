@@ -10,35 +10,59 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
 class NotesViewModel @Inject constructor() : ViewModel() {
-    
+
     private val _notes = MutableStateFlow<List<Note>>(emptyList())
     val notes: StateFlow<List<Note>> = _notes.asStateFlow()
-    
+
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-    
-    val filteredNotes: StateFlow<List<Note>> = combine(notes, _searchQuery) { notesList, query ->
-        if (query.isBlank()) {
-            notesList
-        } else {
-            notesList.filter { note ->
+
+    private val _showFavoritesOnly = MutableStateFlow(false)
+    val showFavoritesOnly: StateFlow<Boolean> = _showFavoritesOnly.asStateFlow()
+
+    val filteredNotes: StateFlow<List<Note>> = combine(
+        notes,
+        _searchQuery,
+        _showFavoritesOnly
+    ) { notesList, query, favoritesOnly ->
+        var result = notesList
+        if (favoritesOnly) {
+            result = result.filter { it.isFavorited }
+        }
+        if (query.isNotBlank()) {
+            result = result.filter { note ->
                 note.title.contains(query, ignoreCase = true)
             }
         }
+        result
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
-    
+
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
     }
-    
+
+    fun toggleShowFavoritesOnly() {
+        _showFavoritesOnly.value = !_showFavoritesOnly.value
+    }
+
+    fun toggleFavorite(noteId: Long) {
+        _notes.update { notes ->
+            notes.map { note ->
+                if (note.id == noteId) note.copy(isFavorited = !note.isFavorited)
+                else note
+            }
+        }
+    }
+
     fun loadNotes() {
         // TODO: Load notes from repository
         // For now, add some sample data

@@ -1,10 +1,12 @@
 package com.ultrawork.notes
 
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.ultrawork.notes.ui.screens.NotesListScreen
@@ -189,5 +191,72 @@ class NotesE2ETests {
         composeTestRule
             .onNodeWithText("Найдено: 0 из 5")
             .assertIsDisplayed()
+    }
+
+    /**
+     * SC-004: Toggle favorite changes note state and preserves all notes.
+     */
+    @Test
+    fun sc004_toggleFavoriteChangesNoteState() {
+        launchScreen()
+
+        // Toggle favorite on first note
+        composeTestRule
+            .onNodeWithTag("favorite_button_1")
+            .assertIsDisplayed()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        // Toggle favorite off on first note
+        composeTestRule
+            .onNodeWithTag("favorite_button_1")
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        // All 5 notes are still visible
+        composeTestRule.onNodeWithTag("note_card_1").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("note_card_5").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Всего заметок: 5").assertIsDisplayed()
+    }
+
+    /**
+     * SC-005: Favorites filter shows only favorited notes with correct counter.
+     */
+    @Test
+    fun sc005_favoritesFilterShowsOnlyFavoritedNotes() {
+        launchScreen()
+
+        // Favorite note 1
+        composeTestRule
+            .onNodeWithTag("favorite_button_1")
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        // Enable favorites filter
+        composeTestRule
+            .onNodeWithTag("favorites_filter_button")
+            .assertIsDisplayed()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        // Only note_card_1 is visible
+        composeTestRule.onNodeWithTag("note_card_1").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("note_card_2").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("note_card_3").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("note_card_4").assertDoesNotExist()
+        composeTestRule.onNodeWithTag("note_card_5").assertDoesNotExist()
+
+        // Counter shows 1 of 5
+        composeTestRule.onNodeWithText("Найдено: 1 из 5").assertIsDisplayed()
+
+        // Disable favorites filter — all 5 notes visible again
+        composeTestRule
+            .onNodeWithTag("favorites_filter_button")
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Всего заметок: 5").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("note_card_1").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("note_card_5").assertIsDisplayed()
     }
 }
