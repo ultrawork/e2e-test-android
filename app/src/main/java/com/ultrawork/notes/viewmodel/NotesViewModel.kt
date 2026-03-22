@@ -51,7 +51,7 @@ class NotesViewModel @Inject constructor() : ViewModel() {
     }
 
     fun toggleShowFavoritesOnly() {
-        _showFavoritesOnly.value = !_showFavoritesOnly.value
+        _showFavoritesOnly.update { !it }
     }
 
     fun toggleFavorite(noteId: Long) {

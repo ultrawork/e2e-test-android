@@ -7,5 +7,5 @@
     <string name="notes_search_placeholder">Поиск…</string>
     <string name="notes_search_clear">Очистить поиск</string>
     <string name="favorites_filter_description">Показать только избранные</string>
-    <string name="favorite_button_description">Добавить в избранное</string>
+    <string name="favorite_button_description">Переключить избранное</string>
 </resources>
