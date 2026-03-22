@@ -60,6 +60,7 @@ import com.ultrawork.notes.ui.theme.NotesTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.Locale
 import kotlin.random.Random
 
 /** UI model for a single category row. */
@@ -146,16 +147,6 @@ fun CategoryManagerScreen(
                 modifier = Modifier.padding(16.dp)
             )
 
-            if (state.errorMessage != null) {
-                Text(
-                    text = state.errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
             when {
                 state.isLoading -> {
                     Box(
@@ -168,14 +159,6 @@ fun CategoryManagerScreen(
                             CircularProgressIndicator()
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(text = "Loading categories...")
-                            if (state.errorMessage != null) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = state.errorMessage,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
                         }
                     }
                 }
@@ -256,7 +239,7 @@ private fun rememberCategoryDismissState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
                 onDeleteCategory(category)
-                true
+                false
             } else {
                 false
             }
@@ -334,9 +317,6 @@ private fun CategoryEditorDialog(
     var colorHex by rememberSaveable(dialogState.mode, dialogState.categoryId) {
         mutableStateOf(dialogState.initialColorHex)
     }
-    var localError by rememberSaveable(dialogState.mode, dialogState.categoryId) {
-        mutableStateOf(dialogState.errorMessage)
-    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -349,24 +329,28 @@ private fun CategoryEditorDialog(
                     value = name,
                     onValueChange = {
                         name = it
-                        localError = null
+                        if (dialogState.errorMessage != null) {
+                            onInvalidInput("")
+                        }
                     },
                     label = { Text("Name") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    isError = localError != null && name.trim().isEmpty(),
+                    isError = dialogState.errorMessage != null && name.trim().isEmpty(),
                 )
                 TextField(
                     value = colorHex,
                     onValueChange = {
-                        colorHex = it.uppercase()
-                        localError = null
+                        colorHex = it.uppercase(Locale.ROOT)
+                        if (dialogState.errorMessage != null) {
+                            onInvalidInput("")
+                        }
                     },
                     label = { Text("Color hex") },
                     placeholder = { Text("#RRGGBB") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-                    isError = localError != null && !isValidHexColor(colorHex),
+                    isError = dialogState.errorMessage != null && !isValidHexColor(colorHex),
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -384,7 +368,7 @@ private fun CategoryEditorDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                localError?.let {
+                dialogState.errorMessage?.takeIf { it.isNotBlank() }?.let {
                     Text(
                         text = it,
                         color = MaterialTheme.colorScheme.error,
@@ -397,7 +381,7 @@ private fun CategoryEditorDialog(
             TextButton(
                 onClick = {
                     val trimmedName = name.trim()
-                    val normalizedHex = colorHex.trim().uppercase()
+                    val normalizedHex = colorHex.trim().uppercase(Locale.ROOT)
                     val validationError = when {
                         trimmedName.isEmpty() -> "Name cannot be empty"
                         !isValidHexColor(normalizedHex) -> "Color must match #RRGGBB"
@@ -405,7 +389,6 @@ private fun CategoryEditorDialog(
                     }
 
                     if (validationError != null) {
-                        localError = validationError
                         onInvalidInput(validationError)
                     } else {
                         onSave(trimmedName, normalizedHex)
@@ -463,16 +446,12 @@ internal fun parseHexColorOrDefault(value: String, defaultColor: Color = Color(0
     if (!isValidHexColor(normalized)) {
         return defaultColor
     }
-    return try {
-        val raw = normalized.removePrefix("#").toLong(16)
-        Color(
-            red = ((raw shr 16) and 0xFF).toInt(),
-            green = ((raw shr 8) and 0xFF).toInt(),
-            blue = (raw and 0xFF).toInt(),
-        )
-    } catch (_: IllegalArgumentException) {
-        defaultColor
-    }
+    val raw = normalized.removePrefix("#").toLong(16)
+    return Color(
+        red = ((raw shr 16) and 0xFF).toInt(),
+        green = ((raw shr 8) and 0xFF).toInt(),
+        blue = (raw and 0xFF).toInt(),
+    )
 }
 
 private val HEX_COLOR_REGEX = Regex("^#[0-9A-Fa-f]{6}$")
@@ -481,8 +460,11 @@ private val HEX_COLOR_REGEX = Regex("^#[0-9A-Fa-f]{6}$")
 class CategoryManagerDemoViewModel : ViewModel(), CategoryManagerViewModelContract {
     private val _uiState = MutableStateFlow(CategoryManagerUiState(isLoading = true))
     override val uiState: StateFlow<CategoryManagerUiState> = _uiState.asStateFlow()
+    private var isInitialized = false
 
     override fun loadCategories() {
+        if (isInitialized) return
+        isInitialized = true
         _uiState.value = CategoryManagerUiState(
             categories = listOf(
                 CategoryItemUiModel(1L, "Work", "#2196F3"),
