@@ -10,6 +10,7 @@ data class Note(
     val id: Long = 0,
     val title: String,
     val content: String,
+    val isFavorited: Boolean = false,
     val createdAt: Date = Date(),
     val updatedAt: Date = Date()
 )
