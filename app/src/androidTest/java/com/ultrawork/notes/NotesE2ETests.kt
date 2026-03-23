@@ -1,5 +1,6 @@
 package com.ultrawork.notes
 
+import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -7,21 +8,43 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.ultrawork.notes.data.remote.ApiService
+import com.ultrawork.notes.data.repository.NotesRepository
+import com.ultrawork.notes.model.Note
 import com.ultrawork.notes.ui.screens.NotesListScreen
 import com.ultrawork.notes.ui.theme.NotesTheme
 import com.ultrawork.notes.viewmodel.NotesViewModel
 import org.junit.Rule
 import org.junit.Test
+import retrofit2.Response
 
 class NotesE2ETests {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    private val fakeApiService = object : ApiService {
+        override suspend fun fetchNotes(): List<Note> = listOf(
+            Note(id = "1", title = "Shopping List", content = "Milk, Eggs, Bread"),
+            Note(id = "2", title = "Meeting Notes", content = "Discuss project timeline"),
+            Note(id = "3", title = "Ideas", content = "New app features"),
+            Note(id = "4", title = "Travel Plans", content = "Book flights and hotel"),
+            Note(id = "5", title = "Work Tasks", content = "Complete documentation")
+        )
+
+        override suspend fun createNote(body: Map<String, String>): Note =
+            Note(id = "6", title = body["title"] ?: "", content = body["content"] ?: "")
+
+        override suspend fun deleteNote(id: String): Response<Unit> =
+            Response.success(Unit)
+    }
+
     private fun launchScreen() {
+        val repository = NotesRepository(fakeApiService)
+        val viewModel = NotesViewModel(repository)
         composeTestRule.setContent {
             NotesTheme {
-                NotesListScreen(viewModel = NotesViewModel())
+                NotesListScreen(viewModel = viewModel)
             }
         }
         composeTestRule.waitForIdle()

@@ -14,6 +14,7 @@ coreKtx = "1.15.0"
 activityCompose = "1.9.3"
 security = "1.1.0-alpha06"
 detekt = "1.23.7"
+mockk = "1.13.13"
 
 [libraries]
 # AndroidX
@@ -63,6 +64,10 @@ androidx-test-ext = { group = "androidx.test.ext", name = "junit", version = "1.
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version = "3.6.1" }
 compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+
+# Testing - mocking and coroutines
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
