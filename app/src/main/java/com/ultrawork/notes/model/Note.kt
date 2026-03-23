@@ -1,15 +1,29 @@
 package com.ultrawork.notes.model
 
 import androidx.room.Entity
+import androidx.room.Ignore
 import androidx.room.PrimaryKey
-import java.util.Date
+import com.ultrawork.notes.data.Category
 
 @Entity(tableName = "notes")
 data class Note(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String,
     val title: String,
     val content: String,
-    val createdAt: Date = Date(),
-    val updatedAt: Date = Date()
-)
+    val isFavorited: Boolean = false,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+    @Ignore
+    val categories: List<Category> = emptyList()
+) {
+    /** Secondary constructor without categories for Room. */
+    constructor(
+        id: String,
+        title: String,
+        content: String,
+        isFavorited: Boolean,
+        createdAt: String?,
+        updatedAt: String?
+    ) : this(id, title, content, isFavorited, createdAt, updatedAt, emptyList())
+}
