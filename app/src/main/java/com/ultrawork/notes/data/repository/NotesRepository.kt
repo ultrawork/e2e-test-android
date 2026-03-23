@@ -1,14 +1,14 @@
 package com.ultrawork.notes.data.repository
 
+import com.ultrawork.notes.data.remote.CreateNoteRequest
 import com.ultrawork.notes.model.Note
 
 /**
- * Repository interface for notes CRUD operations.
+ * Repository interface for notes operations.
  */
 interface NotesRepository {
-    suspend fun getNotes(): List<Note>
-    suspend fun getNote(id: String): Note?
-    suspend fun createNote(note: Note): Note
-    suspend fun updateNote(note: Note): Note
-    suspend fun deleteNote(id: String): Boolean
+    suspend fun getNotes(): Result<List<Note>>
+    suspend fun createNote(request: CreateNoteRequest): Result<Note>
+    suspend fun deleteNote(id: String): Result<Unit>
+    suspend fun toggleFavorite(id: String): Result<Note>
 }

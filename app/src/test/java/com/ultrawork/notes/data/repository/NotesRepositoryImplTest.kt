@@ -5,7 +5,6 @@ import com.ultrawork.notes.data.remote.CreateNoteRequest
 import com.ultrawork.notes.model.Note
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -22,7 +21,7 @@ class NotesRepositoryImplTest {
     }
 
     @Test
-    fun `getNotes delegates to apiService`() = runTest {
+    fun `getNotes returns success with notes from api`() = runTest {
         val expected = listOf(
             Note(id = "1", title = "A", content = "a"),
             Note(id = "2", title = "B", content = "b")
@@ -31,55 +30,76 @@ class NotesRepositoryImplTest {
 
         val result = repository.getNotes()
 
-        assertEquals(expected, result)
+        assertTrue(result.isSuccess)
+        assertEquals(expected, result.getOrNull())
     }
 
     @Test
-    fun `getNote returns matching note from API list`() = runTest {
-        fakeApi.notesToReturn = listOf(
-            Note(id = "1", title = "A", content = "a"),
-            Note(id = "2", title = "B", content = "b")
-        )
+    fun `getNotes returns failure when api throws`() = runTest {
+        fakeApi.shouldThrow = true
 
-        val result = repository.getNote("2")
+        val result = repository.getNotes()
 
-        assertEquals("B", result?.title)
+        assertTrue(result.isFailure)
     }
 
     @Test
-    fun `getNote returns null when note not found`() = runTest {
-        fakeApi.notesToReturn = listOf(
-            Note(id = "1", title = "A", content = "a")
-        )
-
-        val result = repository.getNote("99")
-
-        assertNull(result)
-    }
-
-    @Test
-    fun `createNote sends CreateNoteRequest to API`() = runTest {
-        val note = Note(id = "", title = "New", content = "Content")
+    fun `createNote returns success with created note`() = runTest {
         val created = Note(id = "10", title = "New", content = "Content")
         fakeApi.noteToReturn = created
+        val request = CreateNoteRequest("New", "Content")
 
-        val result = repository.createNote(note)
+        val result = repository.createNote(request)
 
-        assertEquals(created, result)
-        assertEquals(CreateNoteRequest("New", "Content"), fakeApi.lastCreateRequest)
+        assertTrue(result.isSuccess)
+        assertEquals(created, result.getOrNull())
+        assertEquals(request, fakeApi.lastCreateRequest)
     }
 
     @Test
-    fun `deleteNote calls API and returns true`() = runTest {
+    fun `createNote returns failure when api throws`() = runTest {
+        fakeApi.shouldThrow = true
+
+        val result = repository.createNote(CreateNoteRequest("T", "C"))
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `deleteNote returns success`() = runTest {
         val result = repository.deleteNote("5")
 
-        assertTrue(result)
+        assertTrue(result.isSuccess)
         assertEquals("5", fakeApi.lastDeletedId)
     }
 
-    @Test(expected = UnsupportedOperationException::class)
-    fun `updateNote throws UnsupportedOperationException`() = runTest {
-        repository.updateNote(Note(id = "1", title = "T", content = "C"))
+    @Test
+    fun `deleteNote returns failure when api throws`() = runTest {
+        fakeApi.shouldThrow = true
+
+        val result = repository.deleteNote("5")
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `toggleFavorite returns success with toggled note`() = runTest {
+        val note = Note(id = "1", title = "A", content = "a", isFavorited = false)
+        fakeApi.notesToReturn = listOf(note)
+
+        val result = repository.toggleFavorite("1")
+
+        assertTrue(result.isSuccess)
+        assertEquals(true, result.getOrNull()?.isFavorited)
+    }
+
+    @Test
+    fun `toggleFavorite returns failure when api throws`() = runTest {
+        fakeApi.shouldThrow = true
+
+        val result = repository.toggleFavorite("1")
+
+        assertTrue(result.isFailure)
     }
 
     /**
@@ -91,19 +111,26 @@ class NotesRepositoryImplTest {
         var noteToReturn: Note = Note(id = "0", title = "", content = "")
         var lastCreateRequest: CreateNoteRequest? = null
         var lastDeletedId: String? = null
+        var shouldThrow: Boolean = false
 
-        override suspend fun getNotes(): List<Note> = notesToReturn
+        override suspend fun getNotes(): List<Note> {
+            if (shouldThrow) throw RuntimeException("API error")
+            return notesToReturn
+        }
 
         override suspend fun createNote(request: CreateNoteRequest): Note {
+            if (shouldThrow) throw RuntimeException("API error")
             lastCreateRequest = request
             return noteToReturn
         }
 
         override suspend fun deleteNote(id: String) {
+            if (shouldThrow) throw RuntimeException("API error")
             lastDeletedId = id
         }
 
         override suspend fun toggleFavorite(id: String): Note {
+            if (shouldThrow) throw RuntimeException("API error")
             return notesToReturn.first { it.id == id }.let {
                 it.copy(isFavorited = !it.isFavorited)
             }

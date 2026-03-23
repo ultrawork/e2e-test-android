@@ -6,23 +6,19 @@ import com.ultrawork.notes.model.Note
 
 /**
  * Network-backed implementation of [NotesRepository] using Retrofit [ApiService].
+ * All calls are wrapped in [runCatching] to return [Result].
  */
 class NotesRepositoryImpl(private val apiService: ApiService) : NotesRepository {
 
-    override suspend fun getNotes(): List<Note> =
-        apiService.getNotes()
+    override suspend fun getNotes(): Result<List<Note>> =
+        runCatching { apiService.getNotes() }
 
-    override suspend fun getNote(id: String): Note? =
-        apiService.getNotes().find { it.id == id }
+    override suspend fun createNote(request: CreateNoteRequest): Result<Note> =
+        runCatching { apiService.createNote(request) }
 
-    override suspend fun createNote(note: Note): Note =
-        apiService.createNote(CreateNoteRequest(note.title, note.content))
+    override suspend fun deleteNote(id: String): Result<Unit> =
+        runCatching { apiService.deleteNote(id) }
 
-    override suspend fun updateNote(note: Note): Note =
-        throw UnsupportedOperationException("updateNote is not supported by the remote API")
-
-    override suspend fun deleteNote(id: String): Boolean {
-        apiService.deleteNote(id)
-        return true
-    }
+    override suspend fun toggleFavorite(id: String): Result<Note> =
+        runCatching { apiService.toggleFavorite(id) }
 }

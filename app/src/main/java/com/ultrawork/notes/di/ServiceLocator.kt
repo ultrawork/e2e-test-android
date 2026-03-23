@@ -2,7 +2,6 @@ package com.ultrawork.notes.di
 
 import com.google.gson.GsonBuilder
 import com.ultrawork.notes.data.remote.ApiService
-import com.ultrawork.notes.data.repository.FakeNotesRepository
 import com.ultrawork.notes.data.repository.NotesRepository
 import com.ultrawork.notes.data.repository.NotesRepositoryImpl
 import okhttp3.OkHttpClient
@@ -11,12 +10,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 /**
- * Service locator that provides repository instances based on configuration.
- *
- * When [apiBaseUrl] is blank, returns [FakeNotesRepository].
- * When [apiBaseUrl] is non-blank, creates a Retrofit-backed [NotesRepositoryImpl].
+ * Service locator that provides dependencies for the network layer.
  */
-class DefaultServiceLocator(private val apiBaseUrl: String) {
+class DefaultServiceLocator(apiBaseUrl: String) {
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -46,13 +42,8 @@ class DefaultServiceLocator(private val apiBaseUrl: String) {
         retrofit.create(ApiService::class.java)
     }
 
-    /**
-     * Returns the appropriate [NotesRepository] implementation.
-     */
-    fun provideNotesRepository(): NotesRepository =
-        if (apiBaseUrl.isBlank()) {
-            FakeNotesRepository()
-        } else {
-            NotesRepositoryImpl(apiService)
-        }
+    /** Retrofit-backed [NotesRepository] instance. */
+    val notesRepository: NotesRepository by lazy {
+        NotesRepositoryImpl(apiService)
+    }
 }

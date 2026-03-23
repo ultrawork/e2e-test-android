@@ -20,5 +20,5 @@ object AppModule {
     @Provides
     @Singleton
     fun provideNotesRepository(locator: DefaultServiceLocator): NotesRepository =
-        locator.provideNotesRepository()
+        locator.notesRepository
 }
