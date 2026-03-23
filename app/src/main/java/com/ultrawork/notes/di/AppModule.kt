@@ -14,10 +14,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideServiceLocator(): DefaultServiceLocator = DefaultServiceLocator()
+    fun provideServiceLocator(): DefaultServiceLocator =
+        DefaultServiceLocator(BuildConfig.API_BASE_URL)
 
     @Provides
     @Singleton
     fun provideNotesRepository(locator: DefaultServiceLocator): NotesRepository =
-        locator.provideNotesRepository(BuildConfig.API_BASE_URL)
+        locator.provideNotesRepository()
 }
