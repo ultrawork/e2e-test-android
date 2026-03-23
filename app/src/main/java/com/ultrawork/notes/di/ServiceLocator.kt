@@ -42,14 +42,15 @@ class DefaultServiceLocator(private val apiBaseUrl: String) {
     private val gson by lazy {
         GsonBuilder()
             .registerTypeAdapter(Date::class.java, object : TypeAdapter<Date>() {
-                private val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-                    timeZone = TimeZone.getTimeZone("UTC")
-                }
+                private fun createFormat() =
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                        timeZone = TimeZone.getTimeZone("UTC")
+                    }
                 override fun write(out: JsonWriter, value: Date?) {
-                    out.value(value?.let { format.format(it) })
+                    out.value(value?.let { createFormat().format(it) })
                 }
                 override fun read(`in`: JsonReader): Date? {
-                    return `in`.nextString()?.let { format.parse(it) }
+                    return `in`.nextString()?.let { createFormat().parse(it) }
                 }
             })
             .create()
