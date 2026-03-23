@@ -11,8 +11,11 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 /**
  * Service locator that provides dependencies for the network layer.
+ *
+ * When [apiBaseUrl] is blank, [notesRepository] returns null and no network
+ * infrastructure is created.
  */
-class DefaultServiceLocator(apiBaseUrl: String) {
+class DefaultServiceLocator(private val apiBaseUrl: String) {
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -42,8 +45,9 @@ class DefaultServiceLocator(apiBaseUrl: String) {
         retrofit.create(ApiService::class.java)
     }
 
-    /** Retrofit-backed [NotesRepository] instance. */
-    val notesRepository: NotesRepository by lazy {
-        NotesRepositoryImpl(apiService)
+    /** Retrofit-backed [NotesRepository] instance, or null if [apiBaseUrl] is blank. */
+    val notesRepository: NotesRepository? by lazy {
+        if (apiBaseUrl.isBlank()) null
+        else NotesRepositoryImpl(apiService)
     }
 }

@@ -23,8 +23,8 @@ class NotesRepositoryImplTest {
     @Test
     fun `getNotes returns success with notes from api`() = runTest {
         val expected = listOf(
-            Note(id = "1", title = "A", content = "a"),
-            Note(id = "2", title = "B", content = "b")
+            Note(id = 1, title = "A", content = "a"),
+            Note(id = 2, title = "B", content = "b")
         )
         fakeApi.notesToReturn = expected
 
@@ -45,7 +45,7 @@ class NotesRepositoryImplTest {
 
     @Test
     fun `createNote returns success with created note`() = runTest {
-        val created = Note(id = "10", title = "New", content = "Content")
+        val created = Note(id = 10, title = "New", content = "Content")
         fakeApi.noteToReturn = created
         val request = CreateNoteRequest("New", "Content")
 
@@ -67,37 +67,37 @@ class NotesRepositoryImplTest {
 
     @Test
     fun `deleteNote returns success`() = runTest {
-        val result = repository.deleteNote("5")
+        val result = repository.deleteNote(5L)
 
         assertTrue(result.isSuccess)
-        assertEquals("5", fakeApi.lastDeletedId)
+        assertEquals(5L, fakeApi.lastDeletedId)
     }
 
     @Test
     fun `deleteNote returns failure when api throws`() = runTest {
         fakeApi.shouldThrow = true
 
-        val result = repository.deleteNote("5")
+        val result = repository.deleteNote(5L)
 
         assertTrue(result.isFailure)
     }
 
     @Test
-    fun `toggleFavorite returns success with toggled note`() = runTest {
-        val note = Note(id = "1", title = "A", content = "a", isFavorited = false)
-        fakeApi.notesToReturn = listOf(note)
+    fun `toggleFavorite returns success with note from api`() = runTest {
+        val note = Note(id = 1, title = "A", content = "a")
+        fakeApi.noteToReturn = note
 
-        val result = repository.toggleFavorite("1")
+        val result = repository.toggleFavorite(1L)
 
         assertTrue(result.isSuccess)
-        assertEquals(true, result.getOrNull()?.isFavorited)
+        assertEquals(note, result.getOrNull())
     }
 
     @Test
     fun `toggleFavorite returns failure when api throws`() = runTest {
         fakeApi.shouldThrow = true
 
-        val result = repository.toggleFavorite("1")
+        val result = repository.toggleFavorite(1L)
 
         assertTrue(result.isFailure)
     }
@@ -108,9 +108,9 @@ class NotesRepositoryImplTest {
     private class FakeApiService : ApiService {
 
         var notesToReturn: List<Note> = emptyList()
-        var noteToReturn: Note = Note(id = "0", title = "", content = "")
+        var noteToReturn: Note = Note(id = 0, title = "", content = "")
         var lastCreateRequest: CreateNoteRequest? = null
-        var lastDeletedId: String? = null
+        var lastDeletedId: Long? = null
         var shouldThrow: Boolean = false
 
         override suspend fun getNotes(): List<Note> {
@@ -124,16 +124,14 @@ class NotesRepositoryImplTest {
             return noteToReturn
         }
 
-        override suspend fun deleteNote(id: String) {
+        override suspend fun deleteNote(id: Long) {
             if (shouldThrow) throw RuntimeException("API error")
             lastDeletedId = id
         }
 
-        override suspend fun toggleFavorite(id: String): Note {
+        override suspend fun toggleFavorite(id: Long): Note {
             if (shouldThrow) throw RuntimeException("API error")
-            return notesToReturn.first { it.id == id }.let {
-                it.copy(isFavorited = !it.isFavorited)
-            }
+            return noteToReturn
         }
     }
 }

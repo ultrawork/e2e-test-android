@@ -9,6 +9,6 @@ import com.ultrawork.notes.model.Note
 interface NotesRepository {
     suspend fun getNotes(): Result<List<Note>>
     suspend fun createNote(request: CreateNoteRequest): Result<Note>
-    suspend fun deleteNote(id: String): Result<Unit>
-    suspend fun toggleFavorite(id: String): Result<Note>
+    suspend fun deleteNote(id: Long): Result<Unit>
+    suspend fun toggleFavorite(id: Long): Result<Note>
 }

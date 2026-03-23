@@ -20,10 +20,10 @@ interface ApiService {
     suspend fun createNote(@Body request: CreateNoteRequest): Note
 
     @DELETE("notes/{id}")
-    suspend fun deleteNote(@Path("id") id: String)
+    suspend fun deleteNote(@Path("id") id: Long): Unit
 
     @PATCH("notes/{id}/toggle-favorite")
-    suspend fun toggleFavorite(@Path("id") id: String): Note
+    suspend fun toggleFavorite(@Path("id") id: Long): Note
 }
 
 /**

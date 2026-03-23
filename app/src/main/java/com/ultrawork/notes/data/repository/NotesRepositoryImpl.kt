@@ -16,9 +16,9 @@ class NotesRepositoryImpl(private val apiService: ApiService) : NotesRepository 
     override suspend fun createNote(request: CreateNoteRequest): Result<Note> =
         runCatching { apiService.createNote(request) }
 
-    override suspend fun deleteNote(id: String): Result<Unit> =
+    override suspend fun deleteNote(id: Long): Result<Unit> =
         runCatching { apiService.deleteNote(id) }
 
-    override suspend fun toggleFavorite(id: String): Result<Note> =
+    override suspend fun toggleFavorite(id: Long): Result<Note> =
         runCatching { apiService.toggleFavorite(id) }
 }
