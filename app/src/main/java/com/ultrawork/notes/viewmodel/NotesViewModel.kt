@@ -42,41 +42,42 @@ class NotesViewModel @Inject constructor() : ViewModel() {
     fun loadNotes() {
         // TODO: Load notes from repository
         // For now, add some sample data
+        val now = java.time.Instant.now().toString()
         _notes.value = listOf(
             Note(
-                id = 1,
+                id = "1",
                 title = "Shopping List",
                 content = "Milk, Eggs, Bread",
-                createdAt = java.util.Date(),
-                updatedAt = java.util.Date()
+                createdAt = now,
+                updatedAt = now
             ),
             Note(
-                id = 2,
+                id = "2",
                 title = "Meeting Notes",
                 content = "Discuss project timeline",
-                createdAt = java.util.Date(),
-                updatedAt = java.util.Date()
+                createdAt = now,
+                updatedAt = now
             ),
             Note(
-                id = 3,
+                id = "3",
                 title = "Ideas",
                 content = "New app features",
-                createdAt = java.util.Date(),
-                updatedAt = java.util.Date()
+                createdAt = now,
+                updatedAt = now
             ),
             Note(
-                id = 4,
+                id = "4",
                 title = "Travel Plans",
                 content = "Book flights and hotel",
-                createdAt = java.util.Date(),
-                updatedAt = java.util.Date()
+                createdAt = now,
+                updatedAt = now
             ),
             Note(
-                id = 5,
+                id = "5",
                 title = "Work Tasks",
                 content = "Complete documentation",
-                createdAt = java.util.Date(),
-                updatedAt = java.util.Date()
+                createdAt = now,
+                updatedAt = now
             )
         )
     }
