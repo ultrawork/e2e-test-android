@@ -7,5 +7,6 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-    // TODO: Provide Retrofit, Room database, repositories
+    // Repository layer is temporarily provided via ServiceLocator, not Hilt.
+    // TODO: Migrate Retrofit, Room database, and repositories to Hilt providers.
 }
