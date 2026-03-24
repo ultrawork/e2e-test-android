@@ -6,4 +6,10 @@
     <string name="notes_search_content_description">Поиск заметок</string>
     <string name="notes_search_placeholder">Поиск…</string>
     <string name="notes_search_clear">Очистить поиск</string>
+    <string name="loading_notes">Загрузка заметок…</string>
+    <string name="error_loading_notes">Ошибка загрузки заметок: %s</string>
+    <string name="toggle_favorite">Добавить в избранное</string>
+    <string name="remove_favorite">Убрать из избранного</string>
+    <string name="show_favorites_only">Только избранные</string>
+    <string name="notes_empty">Заметок нет</string>
 </resources>
