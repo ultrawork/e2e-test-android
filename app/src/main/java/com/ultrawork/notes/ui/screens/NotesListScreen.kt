@@ -18,7 +18,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,10 +41,6 @@ fun NotesListScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val showFavoritesOnly by viewModel.showFavoritesOnly.collectAsState()
-
-    LaunchedEffect(Unit) {
-        viewModel.loadNotes()
-    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         NotesSearchBar(
@@ -77,7 +72,9 @@ fun NotesListScreen(
         when {
             isLoading -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("loading_indicator"),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -91,7 +88,9 @@ fun NotesListScreen(
             }
             error != null -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("error_message"),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -101,7 +100,9 @@ fun NotesListScreen(
             }
             filteredNotes.isEmpty() -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("empty_state"),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = stringResource(R.string.notes_empty))
