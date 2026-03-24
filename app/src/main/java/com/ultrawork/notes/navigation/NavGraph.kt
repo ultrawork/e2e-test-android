@@ -20,7 +20,7 @@ fun NavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN
+        startDestination = Routes.NOTES_LIST
     ) {
         composable(Routes.NOTES_LIST) {
             NotesListScreen()

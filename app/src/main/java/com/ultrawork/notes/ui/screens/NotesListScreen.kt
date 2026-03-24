@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -55,7 +55,7 @@ fun NotesListScreen(
             label = { Text(stringResource(R.string.show_favorites_only)) },
             leadingIcon = {
                 Icon(
-                    imageVector = if (showFavoritesOnly) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                    imageVector = if (showFavoritesOnly) Icons.Filled.Star else Icons.Outlined.Star,
                     contentDescription = null
                 )
             },
@@ -143,7 +143,7 @@ fun NotesListScreen(
                                         .testTag("favorite_button_${note.id}")
                                 ) {
                                     Icon(
-                                        imageVector = if (note.isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                        imageVector = if (note.isFavorited) Icons.Filled.Star else Icons.Outlined.Star,
                                         contentDescription = if (note.isFavorited) {
                                             stringResource(R.string.remove_favorite)
                                         } else {
