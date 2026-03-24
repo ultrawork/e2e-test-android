@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,12 +41,14 @@ class NotesViewModel @Inject constructor() : ViewModel() {
     }
 
     fun loadNotes() {
+        // TODO: Load notes from repository
+        // For now, add some sample data
         _notes.value = listOf(
-            Note(id = "1", title = "Shopping List", content = "Milk, Eggs, Bread"),
-            Note(id = "2", title = "Meeting Notes", content = "Discuss project timeline"),
-            Note(id = "3", title = "Ideas", content = "New app features"),
-            Note(id = "4", title = "Travel Plans", content = "Book flights and hotel"),
-            Note(id = "5", title = "Work Tasks", content = "Complete documentation")
+            Note(id = 1, title = "Shopping List", content = "Milk, Eggs, Bread", createdAt = Date(), updatedAt = Date()),
+            Note(id = 2, title = "Meeting Notes", content = "Discuss project timeline", createdAt = Date(), updatedAt = Date()),
+            Note(id = 3, title = "Ideas", content = "New app features", createdAt = Date(), updatedAt = Date()),
+            Note(id = 4, title = "Travel Plans", content = "Book flights and hotel", createdAt = Date(), updatedAt = Date()),
+            Note(id = 5, title = "Work Tasks", content = "Complete documentation", createdAt = Date(), updatedAt = Date())
         )
     }
 }
