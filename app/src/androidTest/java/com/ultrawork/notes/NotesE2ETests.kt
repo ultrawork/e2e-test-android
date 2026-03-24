@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.ultrawork.notes.data.repository.FakeNotesRepository
 import com.ultrawork.notes.ui.screens.NotesListScreen
 import com.ultrawork.notes.ui.theme.NotesTheme
 import com.ultrawork.notes.viewmodel.NotesViewModel
@@ -21,7 +22,7 @@ class NotesE2ETests {
     private fun launchScreen() {
         composeTestRule.setContent {
             NotesTheme {
-                NotesListScreen(viewModel = NotesViewModel())
+                NotesListScreen(viewModel = NotesViewModel(FakeNotesRepository()))
             }
         }
         composeTestRule.waitForIdle()
