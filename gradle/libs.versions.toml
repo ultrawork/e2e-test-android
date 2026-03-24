@@ -57,6 +57,9 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 # Security
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security" }
 
+# Coroutines Test
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+
 # Testing
 junit = { group = "junit", name = "junit", version = "4.13.2" }
 androidx-test-ext = { group = "androidx.test.ext", name = "junit", version = "1.2.1" }

@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import com.ultrawork.notes.data.repository.NotesRepository
+import com.ultrawork.notes.model.Note
 import com.ultrawork.notes.ui.screens.NotesListScreen
 import com.ultrawork.notes.ui.theme.NotesTheme
 import com.ultrawork.notes.viewmodel.NotesViewModel
@@ -18,10 +20,27 @@ class NotesE2ETests {
     @get:Rule
     val composeTestRule = createComposeRule()
 
+    private val fakeRepository = object : NotesRepository {
+        override suspend fun getNotes(): Result<List<Note>> = Result.success(
+            listOf(
+                Note(id = "1", title = "Shopping List", content = "Milk, Eggs, Bread"),
+                Note(id = "2", title = "Meeting Notes", content = "Discuss project timeline"),
+                Note(id = "3", title = "Ideas", content = "New app features"),
+                Note(id = "4", title = "Travel Plans", content = "Book flights and hotel"),
+                Note(id = "5", title = "Work Tasks", content = "Complete documentation")
+            )
+        )
+        override suspend fun createNote(title: String, content: String) =
+            Result.success(Note(title = title, content = content))
+        override suspend fun updateNote(id: String, title: String, content: String) =
+            Result.success(Note(id = id, title = title, content = content))
+        override suspend fun deleteNote(id: String) = Result.success(Unit)
+    }
+
     private fun launchScreen() {
         composeTestRule.setContent {
             NotesTheme {
-                NotesListScreen(viewModel = NotesViewModel())
+                NotesListScreen(viewModel = NotesViewModel(fakeRepository))
             }
         }
         composeTestRule.waitForIdle()
