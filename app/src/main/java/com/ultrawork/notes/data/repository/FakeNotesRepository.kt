@@ -40,10 +40,12 @@ class FakeNotesRepository : NotesRepository {
     }
 
     override suspend fun toggleFavorite(id: Long): Result<Note> {
-        val index = notes.indexOfFirst { it.id == id }
-        if (index == -1) return Result.failure(NoSuchElementException("Note not found"))
-        val updated = notes[index].copy(isFavorited = !notes[index].isFavorited, updatedAt = Date())
-        notes[index] = updated
-        return Result.success(updated)
+        synchronized(notes) {
+            val index = notes.indexOfFirst { it.id == id }
+            if (index == -1) return Result.failure(NoSuchElementException("Note not found"))
+            val updated = notes[index].copy(isFavorited = !notes[index].isFavorited, updatedAt = Date())
+            notes[index] = updated
+            return Result.success(updated)
+        }
     }
 }
