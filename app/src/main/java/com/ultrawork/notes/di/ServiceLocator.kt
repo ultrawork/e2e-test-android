@@ -40,7 +40,11 @@ class DefaultServiceLocator(private val apiBaseUrl: String) {
                     out.value(value?.let { DateTimeFormatter.ISO_INSTANT.format(it.toInstant()) })
                 }
                 override fun read(`in`: JsonReader): Date? {
-                    return `in`.nextString()?.let { Date.from(Instant.parse(it)) }
+                    if (`in`.peek() == com.google.gson.stream.JsonToken.NULL) {
+                        `in`.nextNull()
+                        return null
+                    }
+                    return Date.from(Instant.parse(`in`.nextString()))
                 }
             })
             .create()
