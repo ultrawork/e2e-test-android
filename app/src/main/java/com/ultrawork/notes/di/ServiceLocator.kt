@@ -4,7 +4,6 @@ import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
-import com.ultrawork.notes.BuildConfig
 import com.ultrawork.notes.data.remote.ApiService
 import com.ultrawork.notes.data.repository.NotesRepository
 import com.ultrawork.notes.data.repository.NotesRepositoryImpl
@@ -12,10 +11,9 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 
 /**
  * Service locator that provides dependencies for the network layer.
@@ -27,30 +25,22 @@ class DefaultServiceLocator(private val apiBaseUrl: String) {
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
-            .apply {
-                if (BuildConfig.DEBUG) {
-                    addInterceptor(
-                        HttpLoggingInterceptor().apply {
-                            level = HttpLoggingInterceptor.Level.BODY
-                        }
-                    )
+            .addInterceptor(
+                HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
                 }
-            }
+            )
             .build()
     }
 
     private val gson by lazy {
         GsonBuilder()
             .registerTypeAdapter(Date::class.java, object : TypeAdapter<Date>() {
-                private fun createFormat() =
-                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-                        timeZone = TimeZone.getTimeZone("UTC")
-                    }
                 override fun write(out: JsonWriter, value: Date?) {
-                    out.value(value?.let { createFormat().format(it) })
+                    out.value(value?.let { DateTimeFormatter.ISO_INSTANT.format(it.toInstant()) })
                 }
                 override fun read(`in`: JsonReader): Date? {
-                    return `in`.nextString()?.let { createFormat().parse(it) }
+                    return `in`.nextString()?.let { Date.from(Instant.parse(it)) }
                 }
             })
             .create()
