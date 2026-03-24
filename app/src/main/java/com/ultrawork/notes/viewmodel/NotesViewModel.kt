@@ -58,7 +58,7 @@ class NotesViewModel @Inject constructor(
             _error.value = null
             repository.getNotes()
                 .onSuccess { _notes.value = it }
-                .onFailure { _error.value = it.message ?: "Ошибка загрузки заметок" }
+                .onFailure { _error.value = it.message ?: "Failed to load notes" }
             _isLoading.value = false
         }
     }
@@ -70,7 +70,7 @@ class NotesViewModel @Inject constructor(
                 .onSuccess { updated ->
                     _notes.value = _notes.value.map { if (it.id == updated.id) updated else it }
                 }
-                .onFailure { _error.value = it.message ?: "Ошибка обновления заметки" }
+                .onFailure { _error.value = it.message ?: "Failed to update note" }
         }
     }
 
