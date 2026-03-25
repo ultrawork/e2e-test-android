@@ -1,6 +1,5 @@
 package com.ultrawork.notes.data.remote
 
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -16,7 +15,7 @@ interface ApiService {
     suspend fun createNote(@Body request: CreateNoteRequest): NoteDto
 
     @DELETE("notes/{id}")
-    suspend fun deleteNote(@Path("id") id: String): Response<Unit>
+    suspend fun deleteNote(@Path("id") id: String)
 
     @POST("auth/dev-token")
     suspend fun getDevToken(): DevTokenResponse

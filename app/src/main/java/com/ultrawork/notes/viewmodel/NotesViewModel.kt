@@ -52,7 +52,14 @@ class NotesViewModel @Inject constructor(
             } catch (_: Exception) {
                 // Dev token is optional, continue loading notes
             }
-            loadNotes()
+            _isLoading.value = true
+            try {
+                _notes.value = repository.getNotes()
+            } catch (e: Exception) {
+                _error.value = e.message ?: "Failed to load notes"
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 

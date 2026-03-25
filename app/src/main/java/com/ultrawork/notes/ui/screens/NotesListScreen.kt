@@ -52,6 +52,7 @@ fun NotesListScreen(
     val error by viewModel.error.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
+    var noteToDelete by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(error) {
@@ -121,7 +122,7 @@ fun NotesListScreen(
                                     )
                                 }
                                 IconButton(
-                                    onClick = { viewModel.deleteNote(note.id) },
+                                    onClick = { noteToDelete = note.id },
                                     modifier = Modifier.testTag("delete_note_${note.id}")
                                 ) {
                                     Icon(
@@ -153,6 +154,29 @@ fun NotesListScreen(
             onCreate = { title, content ->
                 viewModel.addNote(title, content)
                 showCreateDialog = false
+            }
+        )
+    }
+
+    noteToDelete?.let { id ->
+        AlertDialog(
+            onDismissRequest = { noteToDelete = null },
+            title = { Text("Delete Note") },
+            text = { Text("Are you sure you want to delete this note?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteNote(id)
+                        noteToDelete = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { noteToDelete = null }) {
+                    Text("Cancel")
+                }
             }
         )
     }
