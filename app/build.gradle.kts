@@ -23,7 +23,7 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            "\"${project.findProperty("API_BASE_URL") ?: "http://10.0.2.2:3000/api"}\""
+            "\"${project.findProperty("API_BASE_URL") ?: "http://10.0.2.2:3001/"}\""
         )
     }
 
@@ -97,6 +97,7 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.test.ext)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))

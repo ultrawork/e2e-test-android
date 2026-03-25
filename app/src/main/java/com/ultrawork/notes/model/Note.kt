@@ -1,15 +1,13 @@
 package com.ultrawork.notes.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 import java.util.Date
 
-@Entity(tableName = "notes")
 data class Note(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    val id: String = "",
     val title: String,
     val content: String,
+    val userId: String? = null,
+    val isFavorited: Boolean = false,
     val createdAt: Date = Date(),
     val updatedAt: Date = Date()
 )
