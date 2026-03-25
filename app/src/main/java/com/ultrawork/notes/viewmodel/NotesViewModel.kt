@@ -78,7 +78,7 @@ class NotesViewModel @Inject constructor(
             _isLoading.value = true
             try {
                 repository.createNote(title, content)
-                loadNotes()
+                _notes.value = repository.getNotes()
             } catch (e: Exception) {
                 _error.value = e.message ?: "Failed to create note"
             } finally {

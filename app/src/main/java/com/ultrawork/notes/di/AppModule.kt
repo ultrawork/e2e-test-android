@@ -62,7 +62,7 @@ abstract class AppModule {
         @Singleton
         fun provideRetrofit(client: OkHttpClient): Retrofit {
             return Retrofit.Builder()
-                .baseUrl(BuildConfig.API_BASE_URL + "/")
+                .baseUrl(BuildConfig.API_BASE_URL.trimEnd('/') + "/")
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
