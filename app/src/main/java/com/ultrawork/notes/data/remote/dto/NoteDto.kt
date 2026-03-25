@@ -7,7 +7,7 @@ data class NoteDto(
     val id: String,
     val title: String,
     val content: String,
-    val userId: String,
+    val userId: String?,
     val createdAt: Date,
     val updatedAt: Date
 )

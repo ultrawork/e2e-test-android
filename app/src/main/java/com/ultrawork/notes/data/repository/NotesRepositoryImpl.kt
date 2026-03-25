@@ -22,6 +22,5 @@ class NotesRepositoryImpl(
 
     override suspend fun deleteNote(id: String): Result<Unit> = runCatching {
         apiService.deleteNote(id)
-        Unit
     }
 }
