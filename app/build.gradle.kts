@@ -23,7 +23,7 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            "\"${project.findProperty("API_BASE_URL") ?: "http://10.0.2.2:3000/api"}\""
+            "\"${project.findProperty("API_BASE_URL") ?: "http://10.0.2.2:3000/api/"}\""
         )
     }
 
