@@ -18,7 +18,7 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.ultrawork.notes.HiltTestRunner"
 
         buildConfigField(
             "String",
@@ -101,6 +101,9 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:2.53.1")
+    kspAndroidTest("com.google.dagger:hilt-android-compiler:2.53.1")
 }
 
 tasks.register<JacocoReport>("jacocoTestReport") {

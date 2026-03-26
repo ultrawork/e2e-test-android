@@ -28,12 +28,24 @@ fun NotesListScreen(
     val notes by viewModel.notes.collectAsState()
     val filteredNotes by viewModel.filteredNotes.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val errorState by viewModel.errorState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadNotes()
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        errorState?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .testTag("error_message")
+            )
+        }
+
         NotesSearchBar(
             query = searchQuery,
             onQueryChange = viewModel::onSearchQueryChanged,
