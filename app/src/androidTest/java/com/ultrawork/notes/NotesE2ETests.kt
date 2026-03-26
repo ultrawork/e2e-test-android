@@ -1,7 +1,6 @@
 package com.ultrawork.notes
 
 import android.content.Context
-import androidx.compose.ui.test.assertDoesNotExist
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -163,18 +162,10 @@ class NotesE2ETests {
             .onNodeWithText("Найдено: 1 из 5")
             .assertIsDisplayed()
 
-        composeTestRule
-            .onNodeWithText("Shopping List")
-            .assertDoesNotExist()
-        composeTestRule
-            .onNodeWithText("Ideas")
-            .assertDoesNotExist()
-        composeTestRule
-            .onNodeWithText("Travel Plans")
-            .assertDoesNotExist()
-        composeTestRule
-            .onNodeWithText("Work Tasks")
-            .assertDoesNotExist()
+        assert(composeTestRule.onAllNodesWithText("Shopping List").fetchSemanticsNodes().isEmpty())
+        assert(composeTestRule.onAllNodesWithText("Ideas").fetchSemanticsNodes().isEmpty())
+        assert(composeTestRule.onAllNodesWithText("Travel Plans").fetchSemanticsNodes().isEmpty())
+        assert(composeTestRule.onAllNodesWithText("Work Tasks").fetchSemanticsNodes().isEmpty())
 
         composeTestRule
             .onNodeWithTag("notes_search_field")
@@ -220,21 +211,11 @@ class NotesE2ETests {
             .performTextInput("несуществующая заметка")
         composeTestRule.waitForIdle()
 
-        composeTestRule
-            .onNodeWithTag("note_card_1")
-            .assertDoesNotExist()
-        composeTestRule
-            .onNodeWithTag("note_card_2")
-            .assertDoesNotExist()
-        composeTestRule
-            .onNodeWithTag("note_card_3")
-            .assertDoesNotExist()
-        composeTestRule
-            .onNodeWithTag("note_card_4")
-            .assertDoesNotExist()
-        composeTestRule
-            .onNodeWithTag("note_card_5")
-            .assertDoesNotExist()
+        assert(composeTestRule.onAllNodesWithTag("note_card_1").fetchSemanticsNodes().isEmpty())
+        assert(composeTestRule.onAllNodesWithTag("note_card_2").fetchSemanticsNodes().isEmpty())
+        assert(composeTestRule.onAllNodesWithTag("note_card_3").fetchSemanticsNodes().isEmpty())
+        assert(composeTestRule.onAllNodesWithTag("note_card_4").fetchSemanticsNodes().isEmpty())
+        assert(composeTestRule.onAllNodesWithTag("note_card_5").fetchSemanticsNodes().isEmpty())
 
         composeTestRule
             .onNodeWithText("Найдено: 0 из 5")
@@ -410,9 +391,7 @@ class NotesE2ETests {
                     .fetchSemanticsNodes().isEmpty()
             }
 
-            composeTestRule
-                .onNodeWithText("To Delete")
-                .assertDoesNotExist()
+            assert(composeTestRule.onAllNodesWithText("To Delete").fetchSemanticsNodes().isEmpty())
             composeTestRule
                 .onNodeWithText("Всего заметок: 0")
                 .assertIsDisplayed()
