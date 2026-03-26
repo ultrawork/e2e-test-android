@@ -82,6 +82,12 @@ class NotesE2ETests {
     fun sc001_initialStateShowsAllNotesAndCounter() {
         launchScreen(createFakeViewModel())
 
+        composeTestRule.waitUntil(5000) {
+            composeTestRule
+                .onAllNodesWithText("Всего заметок: 5")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
         composeTestRule
             .onNodeWithTag("notes_counter")
             .assertIsDisplayed()
@@ -130,6 +136,12 @@ class NotesE2ETests {
     @Test
     fun sc002_searchFiltersNotesAndClearRestoresAll() {
         launchScreen(createFakeViewModel())
+
+        composeTestRule.waitUntil(5000) {
+            composeTestRule
+                .onAllNodesWithText("Всего заметок: 5")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
 
         composeTestRule
             .onNodeWithText("Всего заметок: 5")
@@ -196,6 +208,12 @@ class NotesE2ETests {
     @Test
     fun sc003_searchWithNoResultsShowsEmptyStateAndCounter() {
         launchScreen(createFakeViewModel())
+
+        composeTestRule.waitUntil(5000) {
+            composeTestRule
+                .onAllNodesWithText("Всего заметок: 5")
+                .fetchSemanticsNodes().isNotEmpty()
+        }
 
         composeTestRule
             .onNodeWithTag("notes_search_field")
