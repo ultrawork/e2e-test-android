@@ -12,9 +12,13 @@ class AuthInterceptor(
     private val prefs: SharedPreferences
 ) : Interceptor {
 
+    companion object {
+        const val KEY_AUTH_TOKEN = "auth_token"
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
-        val token = prefs.getString("auth_token", null)
+        val token = prefs.getString(KEY_AUTH_TOKEN, null)
 
         val request = if (token != null) {
             originalRequest.newBuilder()

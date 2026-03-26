@@ -47,53 +47,39 @@ class NotesViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
-    /**
-     * Loads notes from the remote API.
-     */
-    fun loadNotes() {
+    private fun safeLaunch(block: suspend () -> Unit) {
         viewModelScope.launch {
             try {
                 _errorState.value = null
-                _notes.value = repository.getNotes()
+                block()
             } catch (e: HttpException) {
                 _errorState.value = "Ошибка: ${e.code()}"
             } catch (e: Exception) {
                 _errorState.value = "Ошибка: ${e.message}"
             }
         }
+    }
+
+    /**
+     * Loads notes from the remote API.
+     */
+    fun loadNotes() = safeLaunch {
+        _notes.value = repository.getNotes()
     }
 
     /**
      * Creates a new note via the remote API.
      */
-    fun createNote(title: String, content: String) {
-        viewModelScope.launch {
-            try {
-                _errorState.value = null
-                val note = repository.createNote(title, content)
-                _notes.value = _notes.value + note
-            } catch (e: HttpException) {
-                _errorState.value = "Ошибка: ${e.code()}"
-            } catch (e: Exception) {
-                _errorState.value = "Ошибка: ${e.message}"
-            }
-        }
+    fun createNote(title: String, content: String) = safeLaunch {
+        val note = repository.createNote(title, content)
+        _notes.value = _notes.value + note
     }
 
     /**
      * Deletes a note by ID via the remote API.
      */
-    fun deleteNote(id: Long) {
-        viewModelScope.launch {
-            try {
-                _errorState.value = null
-                repository.deleteNote(id)
-                _notes.value = _notes.value.filter { it.id != id }
-            } catch (e: HttpException) {
-                _errorState.value = "Ошибка: ${e.code()}"
-            } catch (e: Exception) {
-                _errorState.value = "Ошибка: ${e.message}"
-            }
-        }
+    fun deleteNote(id: Long) = safeLaunch {
+        repository.deleteNote(id)
+        _notes.value = _notes.value.filter { it.id != id }
     }
 }

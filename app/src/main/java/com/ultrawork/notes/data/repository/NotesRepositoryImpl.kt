@@ -5,6 +5,7 @@ import com.ultrawork.notes.data.remote.CreateNoteRequest
 import com.ultrawork.notes.data.remote.NoteDto
 import com.ultrawork.notes.model.Note
 import retrofit2.HttpException
+import java.util.Date
 
 /**
  * Repository implementation that delegates to the remote API service.
@@ -33,5 +34,7 @@ class NotesRepositoryImpl(
 private fun NoteDto.toDomain(): Note = Note(
     id = id,
     title = title,
-    content = content
+    content = content,
+    createdAt = createdAt?.let { Date(it) } ?: Date(),
+    updatedAt = updatedAt?.let { Date(it) } ?: Date()
 )

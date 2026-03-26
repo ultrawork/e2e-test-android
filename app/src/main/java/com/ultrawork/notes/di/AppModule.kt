@@ -32,7 +32,8 @@ object AppModule {
     @Singleton
     fun provideOkHttpClient(prefs: SharedPreferences): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                    else HttpLoggingInterceptor.Level.BASIC
         }
         return OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(prefs))

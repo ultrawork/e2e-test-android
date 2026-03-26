@@ -60,7 +60,7 @@ class NotesE2ETests {
         val prefs = context.getSharedPreferences("notes_prefs_test", Context.MODE_PRIVATE)
         prefs.edit().clear().apply()
         if (token != null) {
-            prefs.edit().putString("auth_token", token).apply()
+            prefs.edit().putString(AuthInterceptor.KEY_AUTH_TOKEN, token).apply()
         }
 
         val client = OkHttpClient.Builder()

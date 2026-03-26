@@ -29,7 +29,9 @@ interface ApiService {
 data class NoteDto(
     @SerializedName("id") val id: Long,
     @SerializedName("title") val title: String,
-    @SerializedName("content") val content: String
+    @SerializedName("content") val content: String,
+    @SerializedName("createdAt") val createdAt: Long? = null,
+    @SerializedName("updatedAt") val updatedAt: Long? = null
 )
 
 /**
