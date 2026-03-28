@@ -89,7 +89,7 @@ app/src/main/java/com/ultrawork/notes/
 1. Запустите backend:
    ```bash
    cd e2e-test-backend
-   JWT_ENABLED=true JWT_SECRET=e2e-test-secret-key-ultrawork PORT=4000 npm run dev
+   NODE_ENV=development JWT_ENABLED=true JWT_SECRET=e2e-test-secret-key-ultrawork PORT=4000 npm run dev
    ```
 
 2. Убедитесь, что backend отвечает:

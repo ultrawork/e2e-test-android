@@ -2,7 +2,7 @@
 
 **Дата:** 2026-03-28
 **Версия:** v24
-**Вердикт:** PASS (API-контракт) / GAP (статическая верификация кода)
+**Вердикт:** PARTIAL PASS (6/7 API-сценариев) / GAP (статическая верификация кода)
 
 ---
 
@@ -14,6 +14,7 @@
 | Порт | `4000` |
 | JWT | `JWT_ENABLED=true` |
 | JWT Secret | `e2e-test-secret-key-ultrawork` |
+| NODE_ENV | `development` (обязательно для SC-001) |
 | Base URL | `http://localhost:4000/api` |
 | Сценарии | `e2e/scenarios/android-notes-api-v24.md` |
 
@@ -38,20 +39,17 @@
 
 ## 2. Результаты API-сценариев
 
-### SC-001: Получение dev-токена — PASS
+### SC-001: Получение dev-токена — CONDITIONAL PASS
 
 ```bash
 curl -s -X POST http://localhost:4000/api/auth/dev-token
 ```
 
 **Ожидаемый результат:** HTTP 200, `{"token": "<JWT>"}`
-**Фактический результат:** HTTP 200
+**Фактический результат (NODE_ENV=development):** HTTP 200, `{"token":"eyJhbGciOiJIUzI1NiIs..."}`
+**Фактический результат (NODE_ENV=production):** HTTP 404, `{"error":"Not found"}` — эндпоинт `/api/auth/dev-token` доступен только при `NODE_ENV=development`
 
-```json
-{"token":"eyJhbGciOiJIUzI1NiIs..."}
-```
-
-**Статус:** PASS
+**Статус:** CONDITIONAL PASS — требуется `NODE_ENV=development` для работы эндпоинта. При production-окружении токен необходимо генерировать вручную с использованием JWT_SECRET.
 
 ---
 
@@ -170,7 +168,7 @@ curl -s -o /dev/null -w "%{http_code}" -X DELETE \
 
 | ID | Сценарий | Ожидаемый код | API-результат | Компонент Android | Код реализован? |
 |---|---|---|---|---|---|
-| SC-001 | Dev-токен | 200 | **PASS** | `AuthInterceptor` | GAP |
+| SC-001 | Dev-токен | 200 | **CONDITIONAL** (требует `NODE_ENV=development`) | `AuthInterceptor` | GAP |
 | SC-002 | GET без токена | 401 | **PASS** | `AuthInterceptor` | GAP |
 | SC-003 | GET с токеном | 200 | **PASS** | `ApiService`, `NotesRepositoryImpl` | GAP |
 | SC-004 | POST заметки | 201 | **PASS** | `ApiService`, `NotesRepositoryImpl` | GAP |
@@ -178,7 +176,7 @@ curl -s -o /dev/null -w "%{http_code}" -X DELETE \
 | SC-006 | POST пустой payload | 400 | **PASS** | `ApiService` | GAP |
 | SC-007 | DELETE несуществующей | 404 | **PASS** | `ApiService` | GAP |
 
-**API-контракт:** 7/7 PASS
+**API-контракт:** 6/7 PASS, 1/7 CONDITIONAL (SC-001 требует `NODE_ENV=development`)
 **Статическая верификация кода:** 0/6 PASS (6 GAP)
 
 ---
@@ -193,13 +191,14 @@ curl -s -o /dev/null -w "%{http_code}" -X DELETE \
 | BUG-004 | BUG | `Note.id` имеет тип `Long` | `model/Note.kt` | `id: String` (UUID) | `id: Long` с `autoGenerate = true` |
 | BUG-005 | BUG | `API_BASE_URL` указывает на неверный адрес | `build.gradle.kts` | `http://localhost:4000/api` | `http://10.0.2.2:3000/api` |
 | BUG-006 | GAP | `AppModule.kt` не содержит DI-конфигурации | `di/AppModule.kt` | Provide Retrofit, OkHttpClient, Repository | Только `// TODO` комментарий |
+| BUG-007 | ENV | SC-001 возвращает 404 при `NODE_ENV=production` | Backend `auth.routes.ts` | `NODE_ENV=development` для dev-token | Backend запущен с `NODE_ENV=production` |
 
-**Рекомендация:** создать отдельные задачи для реализации BUG-001..BUG-006. Текущая задача (v24) — только верификация и документирование, без изменения кода приложения.
+**Рекомендация:** создать отдельные задачи для реализации BUG-001..BUG-007. Для корректной работы SC-001 необходимо запускать backend с `NODE_ENV=development`. Текущая задача (v24) — только верификация и документирование, без изменения кода приложения.
 
 ---
 
 ## 5. Заключение
 
-Backend API-контракт полностью подтверждён (7/7 PASS). Все эндпоинты возвращают ожидаемые HTTP-коды и структуры данных.
+Backend API-контракт подтверждён для 6/7 сценариев (PASS). SC-001 (`POST /api/auth/dev-token`) требует `NODE_ENV=development` — при production-окружении эндпоинт возвращает 404. Остальные эндпоинты возвращают ожидаемые HTTP-коды и структуры данных.
 
 Android-клиент на текущий момент **не содержит реализации сетевого слоя** (Retrofit, Interceptor, Repository). Модель `Note` использует `Long` вместо `String` для `id`, а `API_BASE_URL` по умолчанию указывает на `http://10.0.2.2:3000/api` вместо `http://localhost:4000/api`. Все несоответствия задокументированы в таблице GAP/BUG выше.

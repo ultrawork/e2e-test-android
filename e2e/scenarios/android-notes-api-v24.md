@@ -15,6 +15,7 @@
 | Порт | `4000` |
 | JWT | Enabled (`JWT_ENABLED=true`) |
 | JWT Secret | `e2e-test-secret-key-ultrawork` |
+| NODE_ENV | `development` (обязательно для SC-001: `/api/auth/dev-token`) |
 | Base URL | `http://localhost:4000/api` |
 
 ---
@@ -27,7 +28,7 @@
 |---|---|
 | ID | SC-001 |
 | Название | Получение dev-токена (`POST /api/auth/dev-token`) |
-| Предусловие | Backend запущен на порту 4000, `JWT_ENABLED=true` |
+| Предусловие | Backend запущен на порту 4000, `JWT_ENABLED=true`, `NODE_ENV=development` |
 | Действие | `POST /api/auth/dev-token` |
 | Ожидаемый результат | HTTP 200, тело содержит `{"token": "<JWT>"}` |
 
