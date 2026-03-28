@@ -8,6 +8,8 @@
 
 # Gson
 -keep class com.ultrawork.notes.model.** { *; }
+-keep class com.ultrawork.notes.data.remote.** { *; }
+-keep class com.ultrawork.notes.data.model.** { *; }
 
 # Coroutines
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
