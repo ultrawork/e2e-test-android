@@ -119,3 +119,48 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/notes
 
 - Сценарии (7 шт.): [`e2e/scenarios/android-notes-api-v27.md`](e2e/scenarios/android-notes-api-v27.md)
 - Отчёт: [`e2e/reports/android-v27.md`](e2e/reports/android-v27.md)
+
+## E2E v28: Верификация Retrofit и ViewModel
+
+### Переменные окружения
+
+| Параметр | Значение | Описание |
+|----------|----------|----------|
+| `BuildConfig.API_BASE_URL` | `http://10.0.2.2:4000/api/` | Базовый URL API (со слэшем на конце) |
+| SharedPreferences ключ | `jwt_token` | Ключ хранения JWT-токена |
+| Backend port | `4000` | Порт Express.js backend |
+
+### Запуск backend
+
+```bash
+cd e2e-test-backend
+JWT_ENABLED=true JWT_SECRET=test-secret PORT=4000 npm run dev
+```
+
+### Сборка и запуск Android-приложения
+
+```bash
+# Сборка с указанием порта 4000
+./gradlew assembleDebug -PAPI_BASE_URL="http://10.0.2.2:4000/api/"
+
+# Установка на эмулятор
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# Запуск
+adb shell am start -n com.ultrawork.notes/.MainActivity
+```
+
+### Быстрая валидация через curl
+
+```bash
+# Получение dev-токена
+TOKEN=$(curl -s -X POST http://localhost:4000/api/auth/dev-token | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+
+# Проверка списка заметок
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/notes
+```
+
+### Сценарии и отчёт
+
+- Сценарии (7 шт.): [`e2e/scenarios/android-notes-api-v28.md`](e2e/scenarios/android-notes-api-v28.md)
+- Отчёт: [`e2e/reports/android-v28.md`](e2e/reports/android-v28.md)
