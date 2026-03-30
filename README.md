@@ -164,3 +164,23 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/notes
 
 - Сценарии (7 шт.): [`e2e/scenarios/android-notes-api-v28.md`](e2e/scenarios/android-notes-api-v28.md)
 - Отчёт: [`e2e/reports/android-v28.md`](e2e/reports/android-v28.md)
+
+## E2E v29
+
+### Сборка
+
+```bash
+./gradlew assembleDebug -PAPI_BASE_URL="http://10.0.2.2:4000/api/"
+```
+
+### Curl-валидация
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:4000/api/auth/dev-token | grep -o '"token":"[^"]*"' | cut -d'"' -f4)
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/notes
+```
+
+### Артефакты
+
+- Сценарии: `e2e/scenarios/android-notes-api-v29.md`
+- Отчёт: `e2e/reports/android-v29.md`
