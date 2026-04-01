@@ -1,7 +1,7 @@
 package com.ultrawork.notes
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertDoesNotExist
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -142,9 +142,9 @@ class NotesSearchUiE2ETests {
         // Verify other notes are not displayed
         composeTestRule
             .onNodeWithText("Shopping List")
-            .assertDoesNotExist()
+            .assertIsNotDisplayed()
         composeTestRule
             .onNodeWithText("Meeting Notes")
-            .assertDoesNotExist()
+            .assertIsNotDisplayed()
     }
 }
