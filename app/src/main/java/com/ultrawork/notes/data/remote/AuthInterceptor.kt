@@ -12,10 +12,15 @@ class AuthInterceptor @Inject constructor(
     @ApplicationContext private val context: Context
 ) : Interceptor {
 
+    companion object {
+        private const val PREFS_NAME = "auth"
+        private const val KEY_JWT_TOKEN = "jwt_token"
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val token = context
-            .getSharedPreferences("auth", Context.MODE_PRIVATE)
-            .getString("jwt_token", null)
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_JWT_TOKEN, null)
 
         val request = if (token != null) {
             chain.request().newBuilder()
