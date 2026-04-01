@@ -18,11 +18,10 @@ import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 
 /**
- * E2E API tests for Android v28 — Retrofit and ViewModel verification.
+ * E2E API tests for Android v35 — Retrofit and ViewModel verification.
  *
- * These tests verify the backend API contract that the Android app
- * (via Retrofit + AuthInterceptor + ViewModel) relies on.
- * Scenarios SC-001 through SC-007 from android-notes-api-v28.md.
+ * Verifies the backend API contract that the Android app relies on
+ * (Retrofit + AuthInterceptor + ViewModel). Scenarios SC-001..SC-007.
  */
 @RunWith(AndroidJUnit4::class)
 class NotesApiE2ETests {
@@ -84,7 +83,7 @@ class NotesApiE2ETests {
 
     /**
      * SC-002: GET /api/notes with Bearer token — list notes.
-     * Verifies authorized request returns 200 and a JSON array.
+     * Verifies authorized request returns 200 and a JSON array of notes.
      */
     @Test
     fun sc002_getNotesWithBearerReturns200AndJsonArray() {
@@ -129,8 +128,8 @@ class NotesApiE2ETests {
         val token = obtainDevToken()
 
         val noteJson = gson.toJson(mapOf(
-            "title" to "Test Note v28",
-            "content" to "Test content for E2E v28 verification"
+            "title" to "Test Note v35",
+            "content" to "Test content for E2E v35 verification"
         ))
 
         val request = Request.Builder()
@@ -148,8 +147,8 @@ class NotesApiE2ETests {
         assertTrue("Response must contain 'id'", json.has("id"))
         assertTrue("Response must contain 'title'", json.has("title"))
         assertTrue("Response must contain 'content'", json.has("content"))
-        assertEquals("Test Note v28", json.get("title").asString)
-        assertEquals("Test content for E2E v28 verification", json.get("content").asString)
+        assertEquals("Test Note v35", json.get("title").asString)
+        assertEquals("Test content for E2E v35 verification", json.get("content").asString)
     }
 
     /**
@@ -179,14 +178,15 @@ class NotesApiE2ETests {
     /**
      * SC-006: DELETE /api/notes/{id} — successful deletion (204).
      * Creates a note, then deletes it and verifies 204 response.
+     * Also verifies the note is removed from the list.
      */
     @Test
     fun sc006_deleteExistingNoteReturns204() {
         val token = obtainDevToken()
 
         val noteJson = gson.toJson(mapOf(
-            "title" to "Note to delete v28",
-            "content" to "This note will be deleted in E2E v28 test"
+            "title" to "Note to delete v35",
+            "content" to "This note will be deleted in E2E v35 test"
         ))
 
         val createRequest = Request.Builder()
@@ -211,6 +211,22 @@ class NotesApiE2ETests {
         val deleteResponse = client.newCall(deleteRequest).execute()
 
         assertEquals(204, deleteResponse.code)
+
+        // Verify note is gone from the list
+        val listRequest = Request.Builder()
+            .url("$baseUrl/notes")
+            .header("Authorization", "Bearer $token")
+            .get()
+            .build()
+
+        val listResponse = client.newCall(listRequest).execute()
+        assertEquals(200, listResponse.code)
+        val listBody = listResponse.body?.string() ?: ""
+        val notesList = gson.fromJson(listBody, JsonArray::class.java)
+        val noteStillExists = (0 until notesList.size()).any {
+            notesList.get(it).asJsonObject.get("id").asString == noteId
+        }
+        assertTrue("Deleted note should not be in the list", !noteStillExists)
     }
 
     /**
