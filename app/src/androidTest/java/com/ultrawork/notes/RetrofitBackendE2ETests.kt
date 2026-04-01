@@ -148,8 +148,8 @@ class RetrofitBackendE2ETests {
         assertTrue("Note must have 'id'", firstNote.has("id"))
         assertTrue("Note must have 'title'", firstNote.has("title"))
         assertTrue("Note must have 'content'", firstNote.has("content"))
-        assertTrue("Note must have 'created_at'", firstNote.has("created_at"))
-        assertTrue("Note must have 'updated_at'", firstNote.has("updated_at"))
+        assertTrue("Note must have 'createdAt'", firstNote.has("createdAt"))
+        assertTrue("Note must have 'updatedAt'", firstNote.has("updatedAt"))
     }
 
     /**
