@@ -1,6 +1,7 @@
 package com.ultrawork.notes
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -15,7 +16,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E UI tests for Android v31 — Mobile UI (NotesListScreen).
+ * E2E UI tests for Android v35 — Mobile UI (NotesListScreen).
  * Covers automated scenarios SC-M03 and SC-M04.
  */
 class NotesSearchUiE2ETests {
@@ -141,9 +142,9 @@ class NotesSearchUiE2ETests {
         // Verify other notes are not displayed
         composeTestRule
             .onNodeWithText("Shopping List")
-            .assertDoesNotExist()
+            .assertIsNotDisplayed()
         composeTestRule
             .onNodeWithText("Meeting Notes")
-            .assertDoesNotExist()
+            .assertIsNotDisplayed()
     }
 }
