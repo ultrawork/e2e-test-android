@@ -8,9 +8,11 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
+import com.ultrawork.notes.data.repository.NotesRepository
 import com.ultrawork.notes.ui.screens.NotesListScreen
 import com.ultrawork.notes.ui.theme.NotesTheme
 import com.ultrawork.notes.viewmodel.NotesViewModel
+import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
 
@@ -26,7 +28,7 @@ class NotesSearchUiE2ETests {
     private fun launchScreen() {
         composeTestRule.setContent {
             NotesTheme {
-                NotesListScreen(viewModel = NotesViewModel())
+                NotesListScreen(viewModel = NotesViewModel(repository = mockk<NotesRepository>(relaxed = true)))
             }
         }
         composeTestRule.waitForIdle()
